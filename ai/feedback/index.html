@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brandon Burtner | AI Portfolio | Open Ended Question with AI Feedback</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #EAEDED;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        ul li {
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #2C2C2C;
+            text-decoration: none;
+            font-size: 2rem;
+            transition: color 0.3s ease, color 0.3s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #708090;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .portfolio-container {
+            width: 40%;
+        }
+
+        .mobile-home {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .portfolio-container {
+                width: 70%;
+            }
+            .breadcrumbs {
+                display: none;
+            }
+            .mobile-home {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .portfolio-container {
+                width: 80%;
+            }
+        }
+
+        .answer-field {
+            width: 100%;
+            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            display: inline-block;
+            padding: 10px 30px;
+            font-size: 1rem;
+            color: #2C2C2C;
+            background-color: #EAEDED;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+        .submit-button:hover {
+            background-color: #D6EAF8;
+            color: #2C2C2C;
+        }
+
+        .submit-button:disabled {
+            background-color: #e1e1e1;
+            color: #999;
+            cursor: default;
+            border-color: #999;
+        }
+
+        .breadcrumbs {
+            font-size: 1rem;
+            left: 40px;
+            position: relative;
+        }
+
+        .breadcrumbs a {
+            font-size: 1rem;
+        }
+
+        .mobile-home a {
+            font-size: 1rem;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Brandon Burtner <span class="breadcrumbs"><a href="/">home</a> / <a href="/ai">portfolio</a> / open ended question with ai feedback</span><span class="mobile-home"><a href="/">home</a></span></h1>
+    <div class="portfolio-container">
+        <p class="question-text"></p>
+        <textarea class="answer-field" placeholder="Type your answer here..." rows="5"></textarea>
+        <button class="submit-button" disabled>Submit</button>
+        <p class="feedback-text"></p>
+    </div>
+
+    <script>
+        // Inject the question text dynamically
+        const questionText = "The United States is often referred to as a 'melting pot.' Explain what this term means and why it is used to describe the country.";
+        document.querySelector('.question-text').textContent = questionText;
+    
+        // Enable/disable the submit button based on textarea input
+        const answerField = document.querySelector('.answer-field');
+        const submitButton = document.querySelector('.submit-button');
+    
+        answerField.addEventListener('input', () => {
+            if (answerField.value.trim() !== "") {
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = true;
+            }
+        });
+    
+        // Handle form submission
+        submitButton.addEventListener('click', () => {
+
+            const feedbackText = document.querySelector('.feedback-text');
+            feedbackText.textContent = "Generating response...";
+
+            const userAnswer = answerField.value.trim();
+    
+            // Construct the payload
+            const payload = {
+                model: "gpt-3.5-turbo",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a reviewer providing feedback for the answer that a user provides in response to a question. You need to tell the user if their answer is correct, partially correct, or incorrect. You should provide feedback reinforcing your assessment. Your total response should be between 1 and 3 sentences maximum. You should grade accurately but leniently. If a user is mostly correct, just tell them they are correct and reinforce the points of a good answer. You should not be overly-strict in your assessment."
+                    },
+                    {
+                        role: "user",
+                        content: `The user is answering the following question: ${questionText}\n\nThe user provided the following answer: ${userAnswer}`
+                    }
+                ]
+            };
+    
+            // Send the POST request to your Vercel backend
+            fetch("https://openai-backend-nine.vercel.app/api/openai", { // Replace with your Vercel backend URL
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Success:", data);
+                // Get the "content" from the API response
+                const feedback = data.choices[0].message.content;
+    
+                // Inject the feedback into the <p> element
+                const feedbackText = document.querySelector('.feedback-text');
+                feedbackText.textContent = feedback; // Set the text content of the <p> element
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("There was an error submitting your response. Please try again.");
+            });
+        });
+    </script>
+</body>
+</html>
