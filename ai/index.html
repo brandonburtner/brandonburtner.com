@@ -62,9 +62,22 @@
             font-size: 1rem;
         }
 
+        .mobile-home {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
         @media (max-width: 1000px) {
             ul {
                 width: 70%;
+            }
+            .breadcrumbs {
+                display: none;
+            }
+            .mobile-home {
+                display: block;
             }
         }
         
@@ -73,14 +86,28 @@
                 width: 80%;
             }
         }
+
+        .breadcrumbs {
+            font-size: 1rem;
+            left: 40px;
+            position: relative;
+        }
+
+        .breadcrumbs a {
+            font-size: 1rem;
+        }
+
+        .mobile-home a {
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
-    <h1>Brandon Burtner</h1>
+    <h1>Brandon Burtner <span class="breadcrumbs"><a href="/">home</a> / portfolio</span><span class="mobile-home"><a href="/">home</a></span></h1>
     <ul>
         <li class="menu-title">AI Portfolio</li>
-        <li class="menu-back"><a href="/">«Back</a></li>
-        <li><a href="/ai/feedback">Open Ended Question with AI Feedback</a></li>
+        <li class="menu-back"><a href="https://www.brandonburtner.com/">«Back</a></li>
+        <li><a href="/feedback">Open Ended Question with AI Feedback</a></li>
     </ul>
 </body>
 </html>
