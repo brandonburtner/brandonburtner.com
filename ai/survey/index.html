@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brandon Burtner | AI Portfolio | Survey Trend Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #EAEDED;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        ul li {
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #2C2C2C;
+            text-decoration: none;
+            font-size: 2rem;
+            transition: color 0.3s ease, color 0.3s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #708090;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .portfolio-container {
+            width: 40%;
+        }
+
+        .mobile-home {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .portfolio-container {
+                width: 70%;
+            }
+            .breadcrumbs {
+                display: none;
+            }
+            .mobile-home {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .portfolio-container {
+                width: 80%;
+            }
+        }
+
+        .answer-field {
+            width: 100%;
+            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            display: inline-block;
+            padding: 10px 30px;
+            margin: 10px 10px 0 0;
+            font-size: 1rem;
+            color: #2C2C2C;
+            background-color: #EAEDED;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+        .submit-button:hover {
+            background-color: #D6EAF8;
+            color: #2C2C2C;
+        }
+
+        .submit-button:disabled {
+            background-color: #e1e1e1;
+            color: #999;
+            cursor: default;
+            border-color: #999;
+        }
+
+        .breadcrumbs {
+            font-size: 1rem;
+            left: 40px;
+            position: relative;
+        }
+
+        .breadcrumbs a {
+            font-size: 1rem;
+        }
+
+        .mobile-home a {
+            font-size: 1rem;
+        }
+
+        .tabs {
+            margin-bottom: 40px;
+        }
+
+        .tabs a {
+            font-size: 1rem;
+            margin-left: 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            text-decoration: none;
+            color: #2C2C2C;
+        }
+         .tabs a.default-tab {
+            color: #708090;
+         }
+
+         p.survey-text {
+            max-height: 300px;
+            overflow: scroll;
+         }
+
+         p#synthesized-feedback-text {
+            display: none;
+         }
+
+    </style>
+</head>
+<body>
+    <h1>Brandon Burtner <span class="breadcrumbs"><a href="/">home</a> / <a href="/ai">ai portfolio</a> / survey trend analysis</span><span class="mobile-home"><a href="/">home</a></span></h1>
+    <div class="portfolio-container">
+        <p class="tabs"><a class="default-tab" id="tab-1">Raw Responses</a> | <a id="tab-2">Synthesized Feedback</a></p>
+        <p class="survey-text" id="raw-response-text">Click "Generate Surveys" to get started.</p>
+        <p class="survey-text" id="synthesized-feedback-text">Once you've generated the raw survey responses, click "Synthesize Feedback" to find trends in the responses.</p>
+        <button class="submit-button" id="generate-button">Generate Surveys</button>
+        <button class="submit-button" id="synthesize-button" disabled>Synthesize Feedback</button>
+    </div>
+
+    <script>
+        let rawResponses = null;
+        const generateButton = document.getElementById('generate-button');    
+        generateButton.addEventListener('click', () => {    
+            document.getElementById("raw-response-text").textContent = "Generating survey results...";
+            document.getElementById("raw-response-text").style.display = "block";
+            document.getElementById("synthesized-feedback-text").style.display = "none";
+            document.getElementById("tab-1").style.color = "#708090";
+            document.getElementById("tab-2").style.color = "#2C2C2C";
+            document.getElementById("generate-button").disabled = true;
+            // Construct the payload
+            const payload = {
+                model: "gpt-3.5-turbo",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a group of learners who have recently completed an online course. Each learner is submitting a survey with feedback about the course. You are creating open-ended feedback responses for this survey. There should be some correlation between the responses because all of the learners went through the same course. At the same time, they are all individuals with different opinions and needs. Some of the feedback responses might be a few words. None should be more than a couple sentences."
+                    },
+                    {
+                        role: "user",
+                        content: `Return a Javascript array of survey responses. The array should have between 20 and 30 responses. Each response should be represented by a string in the array. The array needs to be formatted as such: ["response 1", "response 2", "response 3", etc]. Your response should only contain the array. I will be taking your response and inserting it into the following Javascript function: feedbackArray = [YOUR-RESPONSE], so any text outside of the array will mess up my function.`
+                    }
+                ]
+            };
+    
+            // Send the POST request to your Vercel backend
+            fetch("https://openai-backend-nine.vercel.app/api/openai", { // Replace with your Vercel backend URL
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Success:", data);
+                rawResponses = data.choices[0].message.content;
+                rawResponses = JSON.parse(rawResponses);
+                if (Array.isArray(rawResponses)) {
+                    let rawResponseHTML = '';
+                    rawResponses.forEach((feedback, index) => {
+                    rawResponseHTML += `
+                        <p>User Response <span class="user-response-count">${index + 1}</span></p>
+                        <p class="survey-response">${feedback}</p>
+                        <br>
+                    `;
+                });
+                document.getElementById("raw-response-text").innerHTML = rawResponseHTML;
+                document.getElementById("generate-button").disabled = false;
+                document.getElementById("synthesize-button").disabled = false;
+            } else {
+                    document.getElementById("raw-response-text").textContent = "There was an error retrieving the results, please try again.";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("There was an error submitting your response. Please try again.");
+            });
+        });
+
+        const synthesizeButton = document.getElementById('synthesize-button');    
+        synthesizeButton.addEventListener('click', () => {
+            document.getElementById("synthesized-feedback-text").textContent = "Synthesizing survey feedback...";
+            document.getElementById("raw-response-text").style.display = "none";
+            document.getElementById("synthesized-feedback-text").style.display = "block";
+            document.getElementById("tab-1").style.color = "#2C2C2C";
+            document.getElementById("tab-2").style.color = "#708090";
+            document.getElementById("synthesize-button").disabled = true;
+            const payload = {
+                model: "gpt-3.5-turbo",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are analyzing an array of feedback responses that have been submitted by a group of learners that have recently taken an online training. You are identifying and communicating trends in the responses."
+                    },
+                    {
+                        role: "user",
+                        content: `We have received the following array of survey responses from learners who have recently completed one of our courses. Please provide a helpful summary of trends that you've found in the responses so that we can understand what we're currently doing well with the class and what we should consider changing. Only summarize the most important trends and keep your reponse to 2-3 sentences maximum. Too much information in the response devalues the exercise - be brief. Array of responses: ${rawResponses}`
+                    }
+                ]
+            };
+    
+            // Send the POST request to your Vercel backend
+            fetch("https://openai-backend-nine.vercel.app/api/openai", { // Replace with your Vercel backend URL
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Success:", data);
+                // Get the "content" from the API response
+                const synthesizedFeedback = data.choices[0].message.content;
+                document.getElementById("synthesized-feedback-text").textContent = synthesizedFeedback;
+                document.getElementById("synthesize-button").disabled = false;
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("There was an error submitting your response. Please try again.");
+            });
+        });
+
+        // Tabs
+        let questionTab = "tab-1";
+
+        function handleTabClick(event) {
+        event.preventDefault();
+        questionTab = event.target.id;
+        document.getElementById("tab-1").style.color = "#2C2C2C";
+        document.getElementById("tab-2").style.color = "#2C2C2C";
+        document.getElementById(questionTab).style.color = "#708090";
+        switch (questionTab) {
+            case "tab-1":
+            document.getElementById("raw-response-text").style.display = "block";
+            document.getElementById("synthesized-feedback-text").style.display = "none";
+            break;
+            case "tab-2":
+            document.getElementById("raw-response-text").style.display = "none";
+            document.getElementById("synthesized-feedback-text").style.display = "block";
+            break;
+            default:
+            document.getElementById("raw-response-text").style.display = "block";
+            document.getElementById("synthesized-feedback-text").style.display = "none";
+        }
+        }
+        const tabs = document.querySelectorAll(".tabs a");
+        tabs.forEach(tab => {
+        tab.addEventListener("click", handleTabClick);
+        });
+    </script>
+</body>
+</html>
