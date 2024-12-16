@@ -145,9 +145,22 @@
 
          p.survey-text {
             max-height: 300px;
-            overflow: scroll;
-         }
+            overflow-y: scroll; /* Forces the scrollbar to appear */
+            scrollbar-width: auto; /* For Firefox: ensures a visible scrollbar */
+        }
 
+        p.survey-text::-webkit-scrollbar {
+            width: 8px; /* Customize scrollbar width */
+        }
+
+        p.survey-text::-webkit-scrollbar-thumb {
+            background-color: #cccccc; /* Style for the scrollbar thumb */
+            border-radius: 4px; /* Rounded corners for the scrollbar thumb */
+        }
+
+        p.survey-text::-webkit-scrollbar-track {
+            background-color: #f5f5f5; /* Style for the scrollbar track */
+        }
          p#synthesized-feedback-text {
             display: none;
          }
