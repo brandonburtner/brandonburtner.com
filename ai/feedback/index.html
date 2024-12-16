@@ -136,6 +136,7 @@
             cursor: pointer;
             font-weight: 700;
             text-decoration: none;
+            color: #2C2C2C;
         }
          .tabs a.default-tab {
             color: #708090;
@@ -175,6 +176,7 @@
 
             const feedbackText = document.querySelector('.feedback-text');
             feedbackText.textContent = "Generating response...";
+            document.querySelector('.submit-button').disabled = true;
 
             const userAnswer = answerField.value.trim();
     
@@ -215,6 +217,7 @@
                 // Inject the feedback into the <p> element
                 const feedbackText = document.querySelector('.feedback-text');
                 feedbackText.textContent = feedback; // Set the text content of the <p> element
+                document.querySelector('.submit-button').disabled = false;
             })
             .catch(error => {
                 console.error("Error:", error);
@@ -233,6 +236,7 @@
         document.getElementById("tab-2").style.color = "#2C2C2C";
         document.getElementById("tab-3").style.color = "#2C2C2C";
         document.getElementById(questionTab).style.color = "#708090";
+        document.querySelector('.submit-button').disabled = true;
         switch (questionTab) {
             case "tab-1":
             questionText = "The United States is often referred to as a 'melting pot.' Explain what this term means and why it is used to describe the country.";
