@@ -125,20 +125,37 @@
             font-size: 1rem;
         }
 
+        .tabs {
+            margin-bottom: 20px;
+        }
+
+        .tabs a {
+            font-size: 1rem;
+            margin-left: 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            text-decoration: none;
+        }
+         .tabs a.default-tab {
+            color: #708090;
+         }
+
     </style>
 </head>
 <body>
     <h1>Brandon Burtner <span class="breadcrumbs"><a href="/">home</a> / <a href="/ai">ai portfolio</a> / open ended question with ai feedback</span><span class="mobile-home"><a href="/">home</a></span></h1>
     <div class="portfolio-container">
+        <p class="tabs"><a class="default-tab" id="tab-1">Question 1</a> | <a id="tab-2">Question 2</a> | <a id="tab-3">Question 3</a></p>
         <p class="question-text"></p>
-        <textarea class="answer-field" placeholder="Type your answer here..." rows="5"></textarea>
+        <textarea class="answer-field" id="feedback-text-area" placeholder="Type your answer here..." rows="5"></textarea>
         <button class="submit-button" disabled>Submit</button>
         <p class="feedback-text"></p>
     </div>
 
     <script>
         // Inject the question text dynamically
-        const questionText = "The United States is often referred to as a 'melting pot.' Explain what this term means and why it is used to describe the country.";
+        let questionText = "The United States is often referred to as a 'melting pot.' Explain what this term means and why it is used to describe the country.";
         document.querySelector('.question-text').textContent = questionText;
     
         // Enable/disable the submit button based on textarea input
@@ -204,6 +221,43 @@
                 alert("There was an error submitting your response. Please try again.");
             });
         });
+
+        // NEW
+        let questionTab = "tab-1";
+
+        // Function to handle the click event
+        function handleTabClick(event) {
+        event.preventDefault(); // Prevent default behavior if needed
+        questionTab = event.target.id; // Update the variable to the clicked anchor's id
+        document.getElementById("tab-1").style.color = "#2C2C2C";
+        document.getElementById("tab-2").style.color = "#2C2C2C";
+        document.getElementById("tab-3").style.color = "#2C2C2C";
+        document.getElementById(questionTab).style.color = "#708090";
+        switch (questionTab) {
+            case "tab-1":
+            questionText = "The United States is often referred to as a 'melting pot.' Explain what this term means and why it is used to describe the country.";
+            break;
+            case "tab-2":
+            questionText = "Name 3 European countries and their capital cities.";
+            break;
+            case "tab-3":
+            questionText = "What does the A stand for in the ADDIE model? Provide a brief description.";
+            break;
+            default:
+            questionText = "The United States is often referred to as a 'melting pot.' Explain what this term means and why it is used to describe the country.";
+        }
+        document.querySelector('.question-text').textContent = questionText;
+        document.querySelector('.feedback-text').textContent = "";
+        document.getElementById("feedback-text-area").value = "";
+        }
+
+        // Add event listeners to all anchor elements inside the "tabs" paragraph
+        const tabs = document.querySelectorAll(".tabs a");
+        tabs.forEach(tab => {
+        tab.addEventListener("click", handleTabClick);
+        });
+
+
     </script>
 </body>
 </html>
