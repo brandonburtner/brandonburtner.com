@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brandon Burtner | AI Portfolio | Personalized Activity</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #EAEDED;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        ul li {
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #2C2C2C;
+            text-decoration: none;
+            font-size: 2rem;
+            transition: color 0.3s ease, color 0.3s ease;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #708090;
+        }
+
+        h1 {
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            font-weight: 400;
+        }
+
+        .portfolio-container {
+            width: 40%;
+        }
+
+        .mobile-home {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .portfolio-container {
+                width: 70%;
+            }
+            .breadcrumbs {
+                display: none;
+            }
+            .mobile-home {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .portfolio-container {
+                width: 80%;
+            }
+        }
+
+        .answer-field {
+            width: 100%;
+            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .submit-button {
+            display: inline-block;
+            padding: 10px 30px;
+            font-size: 1rem;
+            color: #2C2C2C;
+            background-color: #EAEDED;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+        .submit-button:hover {
+            background-color: #D6EAF8;
+            color: #2C2C2C;
+        }
+
+        .submit-button:disabled {
+            background-color: #e1e1e1;
+            color: #999;
+            cursor: default;
+            border-color: #999;
+        }
+
+        .breadcrumbs {
+            font-size: 1rem;
+            left: 40px;
+            position: relative;
+        }
+
+        .breadcrumbs a {
+            font-size: 1rem;
+        }
+
+        .mobile-home a {
+            font-size: 1rem;
+        }
+
+        .tabs {
+            margin-bottom: 40px;
+        }
+
+        .tabs a {
+            font-size: 1rem;
+            margin-left: 10px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            text-decoration: none;
+            color: #2C2C2C;
+        }
+         .tabs a.default-tab {
+            color: #708090;
+         }
+
+         p.header-text {
+            font-weight: 700;
+         }
+
+         .short-answer-field {
+            width: 300px;
+            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 2px solid #2C2C2C;
+            border-radius: 6px;
+            box-sizing: border-box;
+            display: block;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Brandon Burtner <span class="breadcrumbs"><a href="/">home</a> / <a href="/ai">ai portfolio</a> / personalized activity</span><span class="mobile-home"><a href="/">home</a></span></h1>
+    <div class="portfolio-container">
+        <p class="header-text">Target Audience: <span id="audience"></span></p>
+        <p class="header-text">Activity Topic: Giving and receiving feedback</p><br>
+        <p class="header-text">Activity Prompt:</p>
+        <p id="activity-prompt"></p>
+        <br>
+        <p>Personalize this learning activity for the following audience:</p>
+        <textarea class="short-answer-field" id="personalized-text-area" rows="1"></textarea>
+        <button class="submit-button" disabled>Submit</button>
+        <p class="feedback-text"></p>
+    </div>
+
+    <script>
+        // Inject the question text dynamically
+        let activityPromptText = "As HR Business Partners, you often coach managers on delivering constructive feedback to their teams. Discuss a recent scenario where you had to guide a leader on giving feedback. What strategies did you recommend, and how did you ensure the feedback was both actionable and well-received? Share key takeaways for effectively balancing candor with empathy.";
+        document.getElementById("activity-prompt").textContent = activityPromptText;
+
+        let audienceText = "HR Business Partners";
+        document.getElementById("audience").textContent = audienceText;
+    
+        // Enable/disable the submit button based on textarea input
+        const answerField = document.querySelector('.short-answer-field');
+        const submitButton = document.querySelector('.submit-button');
+    
+        answerField.addEventListener('input', () => {
+            if (answerField.value.trim() !== "") {
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = true;
+            }
+        });
+    
+        // Handle form submission
+        submitButton.addEventListener('click', () => {
+
+            document.getElementById("activity-prompt").textContent = "Personalizing activity...";
+            document.querySelector('.submit-button').disabled = true;
+
+            audienceText = answerField.value.trim();
+            document.getElementById("audience").textContent = audienceText;
+
+            document.getElementById("personalized-text-area").value = "";
+    
+            // Construct the payload
+            const payload = {
+                model: "gpt-3.5-turbo",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are creating instructional materials for an instructor-led course focused on giving and receiving feedback. The course is being given to a team of professionals in a business environment."
+                    },
+                    {
+                        role: "user",
+                        content: `Create a prompt for a group discussion that reinforces how to properly give and receive feedback. Your prompt should be between 1 and 3 sentences in length. The prompt should be very specifically targeted toward the audience that is being trained. That audience will be made up of people in the following type of role: ${audienceText}`
+                    }
+                ]
+            };
+    
+            // Send the POST request to your Vercel backend
+            fetch("https://openai-backend-nine.vercel.app/api/openai", { // Replace with your Vercel backend URL
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Success:", data);
+                // Get the "content" from the API response
+                activityPromptText = data.choices[0].message.content;
+    
+                // Inject the feedback into the <p> element
+                document.getElementById("activity-prompt").textContent = activityPromptText; // Set the text content of the <p> element
+                document.querySelector('.submit-button').disabled = false;
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("There was an error submitting your response. Please try again.");
+            });
+        });
+    </script>
+</body>
+</html>
