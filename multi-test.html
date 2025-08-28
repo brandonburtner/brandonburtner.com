@@ -185,7 +185,7 @@
 
   <div class="summary-screen hidden" id="summaryScreen">
     <p id="summaryText"></p>
-    <button id="trackPerformanceBtn" class="hidden">Track Your Performance</button>
+    <button id="startOverBtn">Start Over</button>
   </div>
 
   <script>
@@ -211,7 +211,7 @@
     const difficultyUI = document.getElementById('difficultySelect');
     const summaryUI = document.getElementById('summaryScreen');
     const summaryText = document.getElementById('summaryText');
-    const trackBtn = document.getElementById('trackPerformanceBtn');
+    const startOverBtn = document.getElementById("startOverBtn");
 
     const problemEl = document.getElementById('problem');
     const answerEl = document.getElementById('answer');
@@ -250,6 +250,10 @@
 
     pausePlayBtn.addEventListener('click', togglePause);
     resumeBtn.addEventListener('click', togglePause);
+    startOverBtn.addEventListener("click", () => {
+      summaryUI.classList.add('hidden');
+      difficultyUI.classList.remove('hidden');
+    });
 
     function updateSessionScore(correct) {
       const rule = scoreRules[currentDifficulty];
