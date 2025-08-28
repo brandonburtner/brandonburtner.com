@@ -206,7 +206,7 @@
     }
 
     function startGlobalTimer() {
-      globalTimeRemaining = 20;
+      globalTimeRemaining = 600;
       sessionActive = true;
       globalTimerEl.textContent = `Time remaining: ${globalTimeRemaining}s`;
 
@@ -340,7 +340,7 @@
       summaryUI.classList.remove('hidden');
       summaryText.innerHTML = `
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
-        <p><strong>Total time:</strong> 20 seconds</p>
+        <p><strong>Total time:</strong> 600 seconds</p>
         <p><strong>Problems answered:</strong> ${totalAnswered}</p>
         <p><strong>Correct answers:</strong> ${correctAnswers} (${accuracy}%)</p>
         <p><strong>Avg time per question:</strong> ${avgTime} seconds</p>
