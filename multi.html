@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Multiplication Flash Cards</title>
+  <title>Multiplication Flash Cards - Leitner System</title>
   <style>
     body {
       margin: 0;
@@ -87,7 +87,6 @@
 <body>
   <div class="global-timer" id="globalTimer">Time remaining: 20s</div>
 
-  <!-- Flash Card -->
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
     <div class="problem" id="problem">3 × 4</div>
@@ -99,7 +98,6 @@
     <div class="feedback" id="feedback"></div>
   </div>
 
-  <!-- Difficulty Selector -->
   <div class="difficulty-select" id="difficultySelect">
     <h2>Select Difficulty</h2>
     <button onclick="setDifficulty('beginner')">Beginner</button>
@@ -107,7 +105,6 @@
     <button onclick="setDifficulty('advanced')">Advanced</button>
   </div>
 
-  <!-- Final Summary -->
   <div class="summary-screen hidden" id="summaryScreen">
     <h2>Time's Up!</h2>
     <p id="summaryText"></p>
@@ -128,14 +125,21 @@
     const summaryText = document.getElementById('summaryText');
     const trackBtn = document.getElementById('trackPerformanceBtn');
 
-    let a, b;
-    let timer;
-    let globalTimer;
-    let timeRemaining = 0;
-    let globalTimeRemaining = 20;
-    let timedOut = false;
     let currentDifficulty = '';
+    let timeRemaining = 0;
+    let questionStartTime = null;
+    let questionTimeLimit = 0;
+    let globalTimeRemaining = 600;
     let sessionActive = false;
+    let timedOut = false;
+    let globalTimer;
+    let timer;
+    let currentQuestion = null;
+    let currentBox = null;
+
+    let totalAnswered = 0;
+    let correctAnswers = 0;
+    let totalTimeSpent = 0;
 
     const timeLimits = {
       beginner: 15,
@@ -143,13 +147,55 @@
       advanced: 5
     };
 
-    // Stats
-    let totalAnswered = 0;
-    let correctAnswers = 0;
-    let totalTimeSpent = 0;
+    // LocalStorage Helpers
+    function saveLeitnerSystem(system) {
+      localStorage.setItem('leitnerSystem', JSON.stringify(system));
+    }
 
-    let questionStartTime = null;
-    let questionTimeLimit = 0;
+    function loadLeitnerSystem() {
+      let data = localStorage.getItem('leitnerSystem');
+      if (!data) {
+        let allQs = [];
+        for (let i = 1; i <= 12; i++) {
+          for (let j = 1; j <= 12; j++) {
+            allQs.push(`${i}x${j}`);
+          }
+        }
+        const newSystem = {
+          boxOne: allQs,
+          boxTwo: [],
+          boxThree: []
+        };
+        saveLeitnerSystem(newSystem);
+        return newSystem;
+      }
+      return JSON.parse(data);
+    }
+
+    let leitnerSystem = loadLeitnerSystem();
+
+    function pickNextQuestion() {
+      const boxes = [
+        { box: 'boxOne', weight: 70, questions: leitnerSystem.boxOne },
+        { box: 'boxTwo', weight: 20, questions: leitnerSystem.boxTwo },
+        { box: 'boxThree', weight: 10, questions: leitnerSystem.boxThree }
+      ].filter(b => b.questions.length > 0);
+
+      if (boxes.length === 0) return null;
+
+      const totalWeight = boxes.reduce((sum, b) => sum + b.weight, 0);
+      let roll = Math.random() * totalWeight;
+
+      for (const b of boxes) {
+        if (roll < b.weight) {
+          const question = b.questions[Math.floor(Math.random() * b.questions.length)];
+          return { box: b.box, question };
+        }
+        roll -= b.weight;
+      }
+
+      return null;
+    }
 
     function setDifficulty(level) {
       currentDifficulty = level;
@@ -199,8 +245,13 @@
     }
 
     function generateProblem() {
-      a = Math.floor(Math.random() * 12) + 1;
-      b = Math.floor(Math.random() * 12) + 1;
+      const next = pickNextQuestion();
+      if (!next) return;
+
+      currentQuestion = next.question;
+      currentBox = next.box;
+
+      const [a, b] = currentQuestion.split("x").map(Number);
       problemEl.textContent = `${a} × ${b}`;
       answerEl.value = '';
       feedbackEl.textContent = '';
@@ -213,11 +264,34 @@
       startTimer();
     }
 
+    function moveQuestion(correct) {
+      const from = currentBox;
+      const q = currentQuestion;
+
+      const remove = (arr) => arr.splice(arr.indexOf(q), 1);
+      if (from === 'boxOne') {
+        remove(leitnerSystem.boxOne);
+        if (correct) leitnerSystem.boxTwo.push(q);
+        else leitnerSystem.boxOne.push(q); // stays
+      } else if (from === 'boxTwo') {
+        remove(leitnerSystem.boxTwo);
+        if (correct) leitnerSystem.boxThree.push(q);
+        else leitnerSystem.boxOne.push(q);
+      } else if (from === 'boxThree') {
+        remove(leitnerSystem.boxThree);
+        if (correct) leitnerSystem.boxThree.push(q);
+        else leitnerSystem.boxTwo.push(q);
+      }
+
+      saveLeitnerSystem(leitnerSystem);
+    }
+
     function checkAnswer() {
       if (!sessionActive) return;
 
-      const userAnswer = parseInt(answerEl.value, 10);
+      const [a, b] = currentQuestion.split("x").map(Number);
       const correctAnswer = a * b;
+      const userAnswer = parseInt(answerEl.value, 10);
       const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
       const timeUsed = Math.min(elapsed, questionTimeLimit);
 
@@ -229,13 +303,16 @@
       if (userAnswer === correctAnswer && timedOut) {
         feedback = '✅ Correct, but ⏱️ time ran out.';
         feedbackEl.style.color = 'orange';
+        moveQuestion(false);
       } else if (userAnswer === correctAnswer) {
         feedback = '✅ Correct!';
         feedbackEl.style.color = 'green';
         correctAnswers++;
+        moveQuestion(true);
       } else {
         feedback = `❌ Incorrect. The correct answer was ${correctAnswer}.`;
         feedbackEl.style.color = 'red';
+        moveQuestion(false);
       }
 
       feedbackEl.textContent = feedback;
@@ -270,7 +347,7 @@
       `;
 
       updatePerformanceHistory(correctAnswers);
-      const history = JSON.parse(getCookie("history") || "[]");
+      const history = JSON.parse(localStorage.getItem("history") || "[]");
       if (history.length > 1) {
         trackBtn.classList.remove("hidden");
       }
@@ -280,29 +357,15 @@
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    function updatePerformanceHistory(score) {
+      const prev = JSON.parse(localStorage.getItem("history") || "[]");
+      prev.push(score);
+      localStorage.setItem("history", JSON.stringify(prev));
+    }
+
     trackBtn.addEventListener("click", () => {
       window.location.href = "stats.html";
     });
-
-    function setCookie(name, value, days = 365) {
-      const expires = new Date(Date.now() + days * 86400000).toUTCString();
-      document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
-    }
-
-    function getCookie(name) {
-      const cookies = document.cookie.split("; ");
-      for (let cookie of cookies) {
-        const [key, val] = cookie.split("=");
-        if (key === name) return decodeURIComponent(val);
-      }
-      return null;
-    }
-
-    function updatePerformanceHistory(correctCount) {
-      const previous = JSON.parse(getCookie("history") || "[]");
-      previous.push(correctCount);
-      setCookie("history", JSON.stringify(previous));
-    }
 
     submitBtn.addEventListener('click', checkAnswer);
     answerEl.addEventListener('keydown', function (e) {
