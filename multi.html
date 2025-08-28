@@ -189,6 +189,60 @@
   </div>
 
   <script>
+    const SESSION_KEY = 'activeSession';
+
+    function saveSessionData() {
+      const sessionData = {
+        currentQuestion,
+        sessionScore,
+        globalTimeRemaining,
+        currentDifficulty,
+        userSelectedTime,
+        correctAnswers,
+        incorrectAnswers: totalAnswered - correctAnswers
+      };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+    }
+    
+    function clearSessionData() {
+      localStorage.removeItem(SESSION_KEY);
+    }
+    
+    function resumeSession(data) {
+      currentQuestion = data.currentQuestion;
+      sessionScore = data.sessionScore;
+      globalTimeRemaining = data.globalTimeRemaining;
+      currentDifficulty = data.currentDifficulty;
+      userSelectedTime = data.userSelectedTime;
+      correctAnswers = data.correctAnswers;
+      totalAnswered = data.correctAnswers + data.incorrectAnswers;
+      totalTimeSpent = userSelectedTime - globalTimeRemaining;
+    
+      globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
+      document.getElementById("sessionScore").textContent = `Score: ${sessionScore}`;
+    
+      difficultyUI.classList.add('hidden');
+      globalTimerWrapper.classList.remove('hidden');
+      card.classList.remove('hidden');
+      sessionActive = true;
+    
+      startGlobalTimer();
+      renderCurrentProblem();
+    }
+    
+    function renderCurrentProblem() {
+      const [a, b] = currentQuestion.split("x").map(Number);
+      problemEl.textContent = `${a} × ${b}`;
+      answerEl.value = '';
+      feedbackEl.textContent = '';
+      feedbackEl.style.color = '';
+      nextBtn.style.display = 'none';
+      submitBtn.style.display = 'inline-block';
+      submitBtn.disabled = false;
+      answerEl.disabled = false;
+      answerEl.focus();
+      startTimer();
+    }
     let sessionScore = 0;
     let allTimeScore = parseInt(localStorage.getItem("allTimeScore") || "0");
     let highScore = parseInt(localStorage.getItem("highScore") || "0");
@@ -340,6 +394,7 @@
             globalTimerEl.textContent = `⏱️ Time's up!`;
             sessionActive = false;
             disableInput();
+            clearSessionData();
             showSummary();
           }
         }
@@ -369,6 +424,7 @@
       answerEl.disabled = false;
       answerEl.focus();
       startTimer();
+      saveSessionData();
     }
 
     function startTimer() {
@@ -459,6 +515,7 @@
 
     function showSummary() {
       globalTimerWrapper.classList.add('hidden');
+      clearSessionData();
       const accuracy = totalAnswered > 0
         ? Math.round((correctAnswers / totalAnswered) * 100)
         : 0;
@@ -540,6 +597,15 @@
       if (e.key === 'Enter') checkAnswer();
     });
     nextBtn.addEventListener('click', generateProblem);
+    window.onload = () => {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const resume = confirm("You have an unfinished session. Would you like to resume it?");
+        if (resume) {
+          resumeSession(JSON.parse(saved));
+        }
+      }
+    };
   </script>
 </body>
 </html>
