@@ -95,7 +95,6 @@
   </style>
 </head>
 <body>
-  <div id="globalTimerAndScoreWrapper">
     <div class="global-timer hidden" id="globalTimerWrapper">
       <div id="globalTimer">Time remaining: 10:00</div>
       <button id="pausePlayBtn" aria-label="Pause" style="background: none; border: none; cursor: pointer;">
@@ -107,9 +106,8 @@
           <polygon points="6,4 20,12 6,20" fill="#000"/>
         </svg>
       </button>
+      <div id="sessionScore" style="font-size: 1.5rem; font-weight: bold; margin-left: auto;">Score: 0</div>
     </div>
-    <div id="sessionScore" style="font-size: 1.5rem; font-weight: bold; margin-left: auto;">Score: 0</div>
-  </div>
 
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
@@ -417,7 +415,7 @@
     }
 
     function showSummary() {
-      globalTimerAndScoreWrapper.classList.add('hidden');
+      globalTimerWrapper.classList.add('hidden');
       const accuracy = totalAnswered > 0
         ? Math.round((correctAnswers / totalAnswered) * 100)
         : 0;
