@@ -21,6 +21,9 @@
       font-size: 1.5rem;
       font-weight: bold;
       margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
 
     .card {
@@ -60,8 +63,7 @@
     }
 
     button.selected {
-      background-color: #003366
-;
+      background-color: #003366;
     }
 
     .feedback {
@@ -90,7 +92,18 @@
   </style>
 </head>
 <body>
-  <div class="global-timer hidden" id="globalTimer">Time remaining: 10:00</div>
+  <div class="global-timer hidden" id="globalTimerWrapper">
+    <div id="globalTimer">Time remaining: 10:00</div>
+    <button id="pausePlayBtn" aria-label="Pause" style="background: none; border: none; cursor: pointer;">
+      <svg id="pauseIcon" width="24" height="24" viewBox="0 0 24 24">
+        <rect x="6" y="4" width="4" height="16" fill="#000"/>
+        <rect x="14" y="4" width="4" height="16" fill="#000"/>
+      </svg>
+      <svg id="playIcon" class="hidden" width="24" height="24" viewBox="0 0 24 24">
+        <polygon points="6,4 20,12 6,20" fill="#000"/>
+      </svg>
+    </button>
+  </div>
 
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
@@ -101,6 +114,15 @@
       <button id="nextBtn">Next</button>
     </div>
     <div class="feedback" id="feedback"></div>
+  </div>
+
+  <div id="pauseOverlay" class="hidden" style="text-align: center; margin-top: 100px;">
+    <h1 style="font-size: 3rem; font-weight: bold;">Paused</h1>
+    <button id="resumeBtn" aria-label="Resume" style="background: none; border: none; margin-top: 2rem; cursor: pointer;">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <polygon points="16,12 52,32 16,52" fill="#000"/>
+      </svg>
+    </button>
   </div>
 
   <div class="difficulty-select" id="difficultySelect">
@@ -126,13 +148,19 @@
   </div>
 
   <script>
-    const difficultyUI = document.getElementById('difficultySelect');
+    const globalTimerWrapper = document.getElementById('globalTimerWrapper');
     const globalTimerEl = document.getElementById('globalTimer');
+    const pausePlayBtn = document.getElementById('pausePlayBtn');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const playIcon = document.getElementById('playIcon');
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const resumeBtn = document.getElementById('resumeBtn');
+
     const card = document.getElementById('card');
+    const difficultyUI = document.getElementById('difficultySelect');
     const summaryUI = document.getElementById('summaryScreen');
     const summaryText = document.getElementById('summaryText');
     const trackBtn = document.getElementById('trackPerformanceBtn');
-    const playBtn = document.getElementById('playBtn');
 
     const problemEl = document.getElementById('problem');
     const answerEl = document.getElementById('answer');
@@ -140,7 +168,9 @@
     const submitBtn = document.getElementById('submitBtn');
     const nextBtn = document.getElementById('nextBtn');
     const timerEl = document.getElementById('timer');
+    const playBtn = document.getElementById('playBtn');
 
+    let isPaused = false;
     let currentDifficulty = '';
     let globalTimeRemaining = 600;
     let userSelectedTime = null;
@@ -166,6 +196,26 @@
 
     let permanentLeitnerSystem = loadLeitnerSystem();
     let tempLeitnerSystem = JSON.parse(JSON.stringify(permanentLeitnerSystem));
+
+    pausePlayBtn.addEventListener('click', togglePause);
+    resumeBtn.addEventListener('click', togglePause);
+
+    function togglePause() {
+      isPaused = !isPaused;
+      if (isPaused) {
+        clearInterval(globalTimer);
+        card.classList.add('hidden');
+        pauseOverlay.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        playIcon.classList.remove('hidden');
+      } else {
+        startGlobalTimer();
+        card.classList.remove('hidden');
+        pauseOverlay.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        playIcon.classList.add('hidden');
+      }
+    }
 
     function setDifficulty(level, btn) {
       currentDifficulty = level;
@@ -196,9 +246,10 @@
     }
 
     function startSession() {
+      tempLeitnerSystem = JSON.parse(JSON.stringify(permanentLeitnerSystem));
       difficultyUI.classList.add('hidden');
       globalTimeRemaining = userSelectedTime;
-      globalTimerEl.classList.remove('hidden');
+      globalTimerWrapper.classList.remove('hidden');
       card.classList.remove('hidden');
       sessionActive = true;
       totalAnswered = 0;
@@ -212,14 +263,16 @@
     function startGlobalTimer() {
       clearInterval(globalTimer);
       globalTimer = setInterval(() => {
-        globalTimeRemaining--;
-        globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
-        if (globalTimeRemaining <= 0) {
-          clearInterval(globalTimer);
-          globalTimerEl.textContent = `⏱️ Time's up!`;
-          sessionActive = false;
-          disableInput();
-          showSummary();
+        if (!isPaused) {
+          globalTimeRemaining--;
+          globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
+          if (globalTimeRemaining <= 0) {
+            clearInterval(globalTimer);
+            globalTimerEl.textContent = `⏱️ Time's up!`;
+            sessionActive = false;
+            disableInput();
+            showSummary();
+          }
         }
       }, 1000);
     }
