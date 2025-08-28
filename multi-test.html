@@ -532,14 +532,14 @@
       }
     
       summaryUI.classList.remove('hidden');
-      summaryText.innerHTML = `
+      summaryText.innerHTML = '
         <h1 style="font-size: 2.5rem;">Score: ${sessionScore}</h1>
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
         <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
         <p><strong>Correct answers:</strong> ${correctDisplay}</p>
         <p><strong>All Time Score:</strong> ${allTimeScore}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
-      `;
+      ';
 
       if (sessionScore == highScore) {
         celebrateHighScore();
@@ -560,7 +560,7 @@
     }
 
     function celebrateHighScore() {
-      summaryText.innerHTML = "<h1 style="font-size: 2.5rem;">🎉🎉🎉 NEW HIGH SCORE! 🎉🎉🎉</h1>" + summaryText.innerHTML;
+      summaryText.innerHTML = '<h1 style="font-size: 2.5rem;">🎉🎉🎉 NEW HIGH SCORE! 🎉🎉🎉</h1>' + summaryText.innerHTML;
       var duration = 15 * 1000;
       var animationEnd = Date.now() + duration;
       var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
