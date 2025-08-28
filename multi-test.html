@@ -484,11 +484,6 @@
     
       updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
-    
-      const history = JSON.parse(localStorage.getItem("history") || "[]");
-      if (history.length > 1) {
-        trackBtn.classList.remove("hidden");
-      }
     }
 
     function capitalize(str) {
@@ -544,9 +539,6 @@
       if (e.key === 'Enter') checkAnswer();
     });
     nextBtn.addEventListener('click', generateProblem);
-    trackBtn.addEventListener('click', () => {
-      window.location.href = "stats.html";
-    });
   </script>
 </body>
 </html>
