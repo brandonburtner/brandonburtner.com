@@ -106,8 +106,8 @@
         <polygon points="6,4 20,12 6,20" fill="#000"/>
       </svg>
     </button>
-  </div>
   <div id="sessionScore" style="font-size: 1.5rem; font-weight: bold; margin-left: auto;">Score: 0</div>
+  </div>
 
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
@@ -416,6 +416,7 @@
     }
 
     function showSummary() {
+      globalTimerWrapper.classList.add('hidden');
       const accuracy = totalAnswered > 0
         ? Math.round((correctAnswers / totalAnswered) * 100)
         : 0;
