@@ -269,10 +269,10 @@
 
     function pickNextQuestion() {
       const boxWeights = [
-        { box: 'boxOne', questions: tempLeitnerSystem.boxOne, weightPerQ: 7 },
-        { box: 'boxTwo', questions: tempLeitnerSystem.boxTwo, weightPerQ: 2 },
-        { box: 'boxThree', questions: tempLeitnerSystem.boxThree, weightPerQ: 1 }
-      ].filter(b => b.questions.length > 0);
+  { box: 'boxOne', questions: permanentLeitnerSystem.boxOne, weightPerQ: 7 },
+  { box: 'boxTwo', questions: permanentLeitnerSystem.boxTwo, weightPerQ: 2 },
+  { box: 'boxThree', questions: permanentLeitnerSystem.boxThree, weightPerQ: 1 }
+].filter(b => b.questions.length > 0);
       const weightedPool = [];
       boxWeights.forEach(b => {
         const weight = b.questions.length * b.weightPerQ;
@@ -280,7 +280,7 @@
       });
       if (weightedPool.length === 0) return null;
       const selectedBox = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-      const questionPool = tempLeitnerSystem[selectedBox];
+      const questionPool = permanentLeitnerSystem[selectedBox];
       const question = questionPool[Math.floor(Math.random() * questionPool.length)];
       return { box: selectedBox, question };
     }
