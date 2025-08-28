@@ -532,14 +532,14 @@
       }
     
       summaryUI.classList.remove('hidden');
-      summaryText.innerHTML = '
+      summaryText.innerHTML = `
         <h1 style="font-size: 2.5rem;">Score: ${sessionScore}</h1>
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
         <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
         <p><strong>Correct answers:</strong> ${correctDisplay}</p>
         <p><strong>All Time Score:</strong> ${allTimeScore}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
-      ';
+      `;
 
       if (sessionScore == highScore) {
         celebrateHighScore();
