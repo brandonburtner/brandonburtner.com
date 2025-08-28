@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Performance History</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 2rem;
+    }
+
+    canvas {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    button {
+      margin-top: 2rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1.1rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Your Performance Over Time</h1>
+  <canvas id="performanceChart" width="600" height="400"></canvas>
+  <button onclick="window.location.href='index.html'">Back to Practice</button>
+
+  <script>
+    function getCookie(name) {
+      const cookies = document.cookie.split("; ");
+      for (let cookie of cookies) {
+        const [key, val] = cookie.split("=");
+        if (key === name) return decodeURIComponent(val);
+      }
+      return null;
+    }
+
+    const history = JSON.parse(getCookie("history") || "[]");
+    const ctx = document.getElementById("performanceChart").getContext("2d");
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: history.map((_, i) => `Attempt ${i + 1}`),
+        datasets: [{
+          label: 'Correct Answers',
+          data: history,
+          backgroundColor: 'rgba(0,123,255,0.2)',
+          borderColor: 'rgba(0,123,255,1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.2,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            stepSize: 1,
+            title: {
+              display: true,
+              text: 'Correct Answers'
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
