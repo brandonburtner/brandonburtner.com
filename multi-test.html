@@ -95,18 +95,20 @@
   </style>
 </head>
 <body>
-    <div class="global-timer hidden" id="globalTimerWrapper">
-      <div id="globalTimer">Time remaining: 10:00</div>
-      <button id="pausePlayBtn" aria-label="Pause" style="background: none; border: none; cursor: pointer;">
-        <svg id="pauseIcon" width="24" height="24" viewBox="0 0 24 24">
-          <rect x="6" y="4" width="4" height="16" fill="#000"/>
-          <rect x="14" y="4" width="4" height="16" fill="#000"/>
-        </svg>
-        <svg id="playIcon" class="hidden" width="24" height="24" viewBox="0 0 24 24">
-          <polygon points="6,4 20,12 6,20" fill="#000"/>
-        </svg>
-      </button>
-      <div id="sessionScore" style="font-size: 1.5rem; font-weight: bold; margin-left: auto;">Score: 0</div>
+    <div class="global-timer hidden" id="globalTimerWrapper" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 1rem; box-sizing: border-box; max-width: 800px;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div id="globalTimer" style="font-size: 1.5rem; font-weight: bold;">Time remaining: 10:00</div>
+        <button id="pausePlayBtn" aria-label="Pause" style="background: none; border: none; cursor: pointer;">
+          <svg id="pauseIcon" width="24" height="24" viewBox="0 0 24 24">
+            <rect x="6" y="4" width="4" height="16" fill="#000"/>
+            <rect x="14" y="4" width="4" height="16" fill="#000"/>
+          </svg>
+          <svg id="playIcon" class="hidden" width="24" height="24" viewBox="0 0 24 24">
+            <polygon points="6,4 20,12 6,20" fill="#000"/>
+          </svg>
+        </button>
+      </div>
+      <div id="sessionScore" style="font-size: 1.5rem; font-weight: bold;">Score: 0</div>
     </div>
 
   <div class="card hidden" id="card">
