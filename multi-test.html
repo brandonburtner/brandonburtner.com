@@ -97,6 +97,7 @@
 <body>
   <div class="global-timer hidden" id="globalTimerWrapper">
     <div id="globalTimer">Time remaining: 10:00</div>
+    <div id="sessionScore" style="font-size: 1.5rem; font-weight: bold; margin-left: auto;">Score: 0</div>
     <button id="pausePlayBtn" aria-label="Pause" style="background: none; border: none; cursor: pointer;">
       <svg id="pauseIcon" width="24" height="24" viewBox="0 0 24 24">
         <rect x="6" y="4" width="4" height="16" fill="#000"/>
@@ -151,6 +152,16 @@
   </div>
 
   <script>
+    let sessionScore = 0;
+    let allTimeScore = parseInt(localStorage.getItem("allTimeScore") || "0");
+    let highScore = parseInt(localStorage.getItem("highScore") || "0");
+    
+    const scoreRules = {
+      beginner: { correct: 2, incorrect: -1 },
+      intermediate: { correct: 4, incorrect: -2 },
+      advanced: { correct: 8, incorrect: -6 }
+    };
+    
     const globalTimerWrapper = document.getElementById('globalTimerWrapper');
     const globalTimerEl = document.getElementById('globalTimer');
     const pausePlayBtn = document.getElementById('pausePlayBtn');
@@ -203,6 +214,16 @@
     pausePlayBtn.addEventListener('click', togglePause);
     resumeBtn.addEventListener('click', togglePause);
 
+    function updateSessionScore(correct) {
+      const rule = scoreRules[currentDifficulty];
+      if (!rule) return;
+    
+      sessionScore += correct ? rule.correct : rule.incorrect;
+      if (sessionScore < 0) sessionScore = 0;
+    
+      document.getElementById("sessionScore").textContent = `Score: ${sessionScore}`;
+    }
+    
     function togglePause() {
       isPaused = !isPaused;
       if (isPaused) {
@@ -255,9 +276,13 @@
       globalTimerWrapper.classList.remove('hidden');
       card.classList.remove('hidden');
       sessionActive = true;
+    
       totalAnswered = 0;
       correctAnswers = 0;
       totalTimeSpent = 0;
+      sessionScore = 0;
+      document.getElementById("sessionScore").textContent = "Score: 0";
+    
       globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
       startGlobalTimer();
       generateProblem();
@@ -346,20 +371,24 @@
 
     function checkAnswer() {
       if (!sessionActive) return;
+    
       const [a, b] = currentQuestion.split("x").map(Number);
       const correctAnswer = a * b;
       const userAnswer = parseInt(answerEl.value, 10);
       const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
       const timeUsed = Math.min(elapsed, questionTimeLimit);
+    
       totalAnswered++;
       totalTimeSpent += timeUsed;
-
+    
       let feedback = '';
+      const isCorrect = userAnswer === correctAnswer && !timedOut;
+    
       if (userAnswer === correctAnswer && timedOut) {
         feedback = '✅ Correct, but ⏱️ time ran out.';
         feedbackEl.style.color = 'orange';
         moveQuestion(false);
-      } else if (userAnswer === correctAnswer) {
+      } else if (isCorrect) {
         feedback = '✅ Correct!';
         feedbackEl.style.color = 'green';
         correctAnswers++;
@@ -369,7 +398,9 @@
         feedbackEl.style.color = 'red';
         moveQuestion(false);
       }
-
+    
+      updateSessionScore(isCorrect);
+    
       feedbackEl.textContent = feedback;
       clearInterval(timer);
       submitBtn.style.display = 'none';
@@ -385,18 +416,33 @@
     }
 
     function showSummary() {
-      const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
-      const avgTime = totalAnswered > 0 ? (totalTimeSpent / totalAnswered).toFixed(2) : '0.00';
+      const accuracy = totalAnswered > 0
+        ? Math.round((correctAnswers / totalAnswered) * 100)
+        : 0;
+      const correctDisplay = `${correctAnswers}/${totalAnswered} (${accuracy}%)`;
+    
+      // Update all-time and high scores
+      allTimeScore += sessionScore;
+      localStorage.setItem("allTimeScore", allTimeScore);
+    
+      if (sessionScore > highScore) {
+        highScore = sessionScore;
+        localStorage.setItem("highScore", highScore);
+      }
+    
       summaryUI.classList.remove('hidden');
       summaryText.innerHTML = `
+        <h1 style="font-size: 2.5rem;">Score: ${sessionScore}</h1>
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
         <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
-        <p><strong>Problems answered:</strong> ${totalAnswered}</p>
-        <p><strong>Correct answers:</strong> ${correctAnswers} (${accuracy}%)</p>
-        <p><strong>Avg time per question:</strong> ${avgTime} seconds</p>
+        <p><strong>Correct answers:</strong> ${correctDisplay}</p>
+        <p><strong>All Time Score:</strong> ${allTimeScore}</p>
+        <p><strong>High Score:</strong> ${highScore}</p>
       `;
+    
       updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
+    
       const history = JSON.parse(localStorage.getItem("history") || "[]");
       if (history.length > 1) {
         trackBtn.classList.remove("hidden");
