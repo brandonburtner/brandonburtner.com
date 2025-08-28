@@ -74,7 +74,8 @@
   </style>
 </head>
 <body>
-  <div class="global-timer" id="globalTimer">Time remaining: 600s</div>
+  <div class="global-timer hidden" id="globalTimer">Time remaining: 10:00</div>
+
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
     <div class="problem" id="problem">3 × 4</div>
@@ -85,12 +86,14 @@
     </div>
     <div class="feedback" id="feedback"></div>
   </div>
+
   <div class="difficulty-select" id="difficultySelect">
     <h2>Select Difficulty</h2>
     <button onclick="setDifficulty('beginner')">Beginner</button>
     <button onclick="setDifficulty('intermediate')">Intermediate</button>
     <button onclick="setDifficulty('advanced')">Advanced</button>
   </div>
+
   <div class="summary-screen hidden" id="summaryScreen">
     <h2>Time's Up!</h2>
     <p id="summaryText"></p>
@@ -133,7 +136,6 @@
       advanced: 5
     };
 
-    // Leitner Systems
     let permanentLeitnerSystem = loadLeitnerSystem();
     let tempLeitnerSystem = JSON.parse(JSON.stringify(permanentLeitnerSystem));
 
@@ -157,6 +159,12 @@
         };
       }
       return JSON.parse(data);
+    }
+
+    function formatTime(seconds) {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      return `${m}:${s}`;
     }
 
     function pickNextQuestion() {
@@ -185,6 +193,7 @@
     function setDifficulty(level) {
       currentDifficulty = level;
       difficultyUI.classList.add('hidden');
+      globalTimerEl.classList.remove('hidden');
       card.classList.remove('hidden');
       startGlobalTimer();
       generateProblem();
@@ -193,11 +202,11 @@
     function startGlobalTimer() {
       globalTimeRemaining = 600;
       sessionActive = true;
-      globalTimerEl.textContent = `Time remaining: ${globalTimeRemaining}s`;
+      globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
 
       globalTimer = setInterval(() => {
         globalTimeRemaining--;
-        globalTimerEl.textContent = `Time remaining: ${globalTimeRemaining}s`;
+        globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
         if (globalTimeRemaining <= 0) {
           clearInterval(globalTimer);
           globalTimerEl.textContent = `⏱️ Time's up!`;
@@ -320,7 +329,7 @@
       summaryUI.classList.remove('hidden');
       summaryText.innerHTML = `
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
-        <p><strong>Total time:</strong> 600 seconds</p>
+        <p><strong>Total time:</strong> ${formatTime(600)}</p>
         <p><strong>Problems answered:</strong> ${totalAnswered}</p>
         <p><strong>Correct answers:</strong> ${correctAnswers} (${accuracy}%)</p>
         <p><strong>Avg time per question:</strong> ${avgTime} seconds</p>
