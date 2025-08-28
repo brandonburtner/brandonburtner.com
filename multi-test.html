@@ -188,6 +188,7 @@
     <button id="startOverBtn">Start Over</button>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
   <script>
     const SESSION_KEY = 'activeSession';
 
@@ -528,6 +529,7 @@
       if (sessionScore > highScore) {
         highScore = sessionScore;
         localStorage.setItem("highScore", highScore);
+        celebrateHighScore();
       }
     
       summaryUI.classList.remove('hidden');
@@ -552,6 +554,29 @@
       const prev = JSON.parse(localStorage.getItem("history") || "[]");
       prev.push(score);
       localStorage.setItem("history", JSON.stringify(prev));
+    }
+
+    function celebrateHighScore() {
+      var duration = 15 * 1000;
+      var animationEnd = Date.now() + duration;
+      var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+      
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+      
+      var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+      
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+      
+        var particleCount = 50 * (timeLeft / duration);
+        // since particles fall down, start a bit higher than random
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
     }
 
     function moveQuestion(correct) {
