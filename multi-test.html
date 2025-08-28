@@ -309,6 +309,7 @@
       timedOut = false;
       questionStartTime = Date.now();
       timer = setInterval(() => {
+      if (!isPaused) {
         timeRemaining--;
         if (timeRemaining >= 0) {
           timerEl.textContent = `Time left: ${timeRemaining}s`;
@@ -318,7 +319,8 @@
           clearInterval(timer);
           timerEl.textContent = `⏱️ Time's up!`;
         }
-      }, 1000);
+      }
+    }, 1000);
     }
 
     function pickNextQuestion() {
