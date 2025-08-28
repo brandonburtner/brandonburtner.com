@@ -74,10 +74,10 @@
   </style>
 </head>
 <body>
-  <div class="global-timer hidden" id="globalTimer"></div>
+  <div class="global-timer" id="globalTimer">Time remaining: 600s</div>
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
-    <div class="problem" id="problem"></div>
+    <div class="problem" id="problem">3 × 4</div>
     <input type="number" id="answer" placeholder="Answer" />
     <div>
       <button id="submitBtn">Submit</button>
@@ -96,123 +96,264 @@
     <p id="summaryText"></p>
     <button id="trackPerformanceBtn" class="hidden">Track Your Performance</button>
   </div>
-  <script>
-    const globalTimerEl = document.getElementById('globalTimer');
-    const difficultyUI = document.getElementById('difficultySelect');
-    const card = document.getElementById('card');
-    const summaryUI = document.getElementById('summaryScreen');
-    const trackBtn = document.getElementById("trackPerformanceBtn");
 
+  <script>
+    const card = document.getElementById('card');
+    const difficultyUI = document.getElementById('difficultySelect');
+    const summaryUI = document.getElementById('summaryScreen');
     const problemEl = document.getElementById('problem');
     const answerEl = document.getElementById('answer');
     const feedbackEl = document.getElementById('feedback');
     const submitBtn = document.getElementById('submitBtn');
     const nextBtn = document.getElementById('nextBtn');
     const timerEl = document.getElementById('timer');
+    const globalTimerEl = document.getElementById('globalTimer');
     const summaryText = document.getElementById('summaryText');
-
-    const timeLimits = { beginner: 15, intermediate: 10, advanced: 5 };
+    const trackBtn = document.getElementById('trackPerformanceBtn');
 
     let currentDifficulty = '';
-    let globalTimeRemaining = 600;
-    let timer, globalTimer;
+    let timeRemaining = 0;
     let questionStartTime = null;
     let questionTimeLimit = 0;
+    let globalTimeRemaining = 600;
     let sessionActive = false;
     let timedOut = false;
+    let globalTimer;
+    let timer;
+    let currentQuestion = null;
+    let currentBox = null;
 
     let totalAnswered = 0;
     let correctAnswers = 0;
     let totalTimeSpent = 0;
 
-    let permanentLeitnerSystem, tempLeitnerSystem;
-    let currentQuestion = null;
-    let currentBox = null;
+    const timeLimits = {
+      beginner: 15,
+      intermediate: 10,
+      advanced: 5
+    };
+
+    // Leitner Systems
+    let permanentLeitnerSystem = loadLeitnerSystem();
+    let tempLeitnerSystem = JSON.parse(JSON.stringify(permanentLeitnerSystem));
+
+    function saveLeitnerSystem(system) {
+      localStorage.setItem('leitnerSystem', JSON.stringify(system));
+    }
 
     function loadLeitnerSystem() {
       let data = localStorage.getItem('leitnerSystem');
       if (!data) {
-        const allQs = [];
+        let allQs = [];
         for (let i = 1; i <= 12; i++) {
           for (let j = 1; j <= 12; j++) {
             allQs.push(`${i}x${j}`);
           }
         }
-        const system = { boxOne: allQs, boxTwo: [], boxThree: [] };
-        localStorage.setItem('leitnerSystem', JSON.stringify(system));
-        return system;
+        return {
+          boxOne: allQs,
+          boxTwo: [],
+          boxThree: []
+        };
       }
       return JSON.parse(data);
     }
 
-    function deepClone(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    }
+    function pickNextQuestion() {
+      const boxWeights = [
+        { box: 'boxOne', questions: tempLeitnerSystem.boxOne, weightPerQ: 7 },
+        { box: 'boxTwo', questions: tempLeitnerSystem.boxTwo, weightPerQ: 2 },
+        { box: 'boxThree', questions: tempLeitnerSystem.boxThree, weightPerQ: 1 }
+      ].filter(b => b.questions.length > 0);
 
-    function formatTime(seconds) {
-      const min = String(Math.floor(seconds / 60)).padStart(2, '0');
-      const sec = String(seconds % 60).padStart(2, '0');
-      return `${min}:${sec}`;
+      const weightedPool = [];
+      boxWeights.forEach(b => {
+        const weight = b.questions.length * b.weightPerQ;
+        for (let i = 0; i < weight; i++) {
+          weightedPool.push(b.box);
+        }
+      });
+
+      if (weightedPool.length === 0) return null;
+
+      const selectedBox = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      const questionPool = tempLeitnerSystem[selectedBox];
+      const question = questionPool[Math.floor(Math.random() * questionPool.length)];
+      return { box: selectedBox, question };
     }
 
     function setDifficulty(level) {
       currentDifficulty = level;
-      permanentLeitnerSystem = loadLeitnerSystem();
-      tempLeitnerSystem = deepClone(permanentLeitnerSystem);
       difficultyUI.classList.add('hidden');
-      globalTimerEl.classList.remove('hidden');
       card.classList.remove('hidden');
       startGlobalTimer();
       generateProblem();
     }
 
     function startGlobalTimer() {
+      globalTimeRemaining = 600;
       sessionActive = true;
-      globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
+      globalTimerEl.textContent = `Time remaining: ${globalTimeRemaining}s`;
+
       globalTimer = setInterval(() => {
         globalTimeRemaining--;
-        globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
+        globalTimerEl.textContent = `Time remaining: ${globalTimeRemaining}s`;
         if (globalTimeRemaining <= 0) {
           clearInterval(globalTimer);
-          sessionActive = false;
           globalTimerEl.textContent = `⏱️ Time's up!`;
-          card.classList.add('hidden');
+          sessionActive = false;
+          disableInput();
           showSummary();
         }
       }, 1000);
     }
 
-    function pickNextQuestion() {
-      const boxes = [
-        { box: 'boxOne', baseWeight: 70, questions: permanentLeitnerSystem.boxOne },
-        { box: 'boxTwo', baseWeight: 20, questions: permanentLeitnerSystem.boxTwo },
-        { box: 'boxThree', baseWeight: 10, questions: permanentLeitnerSystem.boxThree }
-      ].filter(b => b.questions.length > 0);
+    function startTimer() {
+      clearInterval(timer);
+      questionTimeLimit = timeLimits[currentDifficulty];
+      timeRemaining = questionTimeLimit;
+      timerEl.textContent = `Time left: ${timeRemaining}s`;
+      timedOut = false;
+      questionStartTime = Date.now();
 
-      const totalQCount = boxes.reduce((sum, b) => sum + b.questions.length, 0);
-
-      const weightedPool = boxes.map(b => {
-        const effectiveWeight = b.baseWeight * (b.questions.length / totalQCount);
-        return { ...b, effectiveWeight };
-      });
-
-      const totalWeight = weightedPool.reduce((sum, b) => sum + b.effectiveWeight, 0);
-      let roll = Math.random() * totalWeight;
-
-      for (const b of weightedPool) {
-        if (roll < b.effectiveWeight) {
-          const q = b.questions[Math.floor(Math.random() * b.questions.length)];
-          return { box: b.box, question: q };
+      timer = setInterval(() => {
+        timeRemaining--;
+        if (timeRemaining >= 0) {
+          timerEl.textContent = `Time left: ${timeRemaining}s`;
         }
-        roll -= b.effectiveWeight;
-      }
-      return null;
+        if (timeRemaining === 0) {
+          timedOut = true;
+          clearInterval(timer);
+          timerEl.textContent = `⏱️ Time's up!`;
+        }
+      }, 1000);
     }
 
-    // generateProblem, checkAnswer, moveQuestion, and summary logic remain the same — updated to reference tempLeitnerSystem for mutation, permanentLeitnerSystem for selection.
+    function generateProblem() {
+      const next = pickNextQuestion();
+      if (!next) return;
 
-    // At the end of the session:
-    // localStorage.setItem('leitnerSystem', JSON.stringify(tempLeitnerSystem));
+      currentQuestion = next.question;
+      currentBox = next.box;
+
+      const [a, b] = currentQuestion.split("x").map(Number);
+      problemEl.textContent = `${a} × ${b}`;
+      answerEl.value = '';
+      feedbackEl.textContent = '';
+      feedbackEl.style.color = '';
+      nextBtn.style.display = 'none';
+      submitBtn.style.display = 'inline-block';
+      submitBtn.disabled = false;
+      answerEl.disabled = false;
+      answerEl.focus();
+      startTimer();
+    }
+
+    function moveQuestion(correct) {
+      const from = currentBox;
+      const q = currentQuestion;
+      const remove = (arr) => arr.splice(arr.indexOf(q), 1);
+
+      if (from === 'boxOne') {
+        remove(tempLeitnerSystem.boxOne);
+        correct ? tempLeitnerSystem.boxTwo.push(q) : tempLeitnerSystem.boxOne.push(q);
+      } else if (from === 'boxTwo') {
+        remove(tempLeitnerSystem.boxTwo);
+        correct ? tempLeitnerSystem.boxThree.push(q) : tempLeitnerSystem.boxOne.push(q);
+      } else if (from === 'boxThree') {
+        remove(tempLeitnerSystem.boxThree);
+        correct ? tempLeitnerSystem.boxThree.push(q) : tempLeitnerSystem.boxTwo.push(q);
+      }
+    }
+
+    function checkAnswer() {
+      if (!sessionActive) return;
+
+      const [a, b] = currentQuestion.split("x").map(Number);
+      const correctAnswer = a * b;
+      const userAnswer = parseInt(answerEl.value, 10);
+      const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+      const timeUsed = Math.min(elapsed, questionTimeLimit);
+
+      totalAnswered++;
+      totalTimeSpent += timeUsed;
+
+      let feedback = '';
+
+      if (userAnswer === correctAnswer && timedOut) {
+        feedback = '✅ Correct, but ⏱️ time ran out.';
+        feedbackEl.style.color = 'orange';
+        moveQuestion(false);
+      } else if (userAnswer === correctAnswer) {
+        feedback = '✅ Correct!';
+        feedbackEl.style.color = 'green';
+        correctAnswers++;
+        moveQuestion(true);
+      } else {
+        feedback = `❌ Incorrect. The correct answer was ${correctAnswer}.`;
+        feedbackEl.style.color = 'red';
+        moveQuestion(false);
+      }
+
+      feedbackEl.textContent = feedback;
+      clearInterval(timer);
+      submitBtn.style.display = 'none';
+      nextBtn.style.display = 'inline-block';
+      answerEl.disabled = true;
+    }
+
+    function disableInput() {
+      card.classList.add('hidden');
+      submitBtn.disabled = true;
+      nextBtn.disabled = true;
+      answerEl.disabled = true;
+    }
+
+    function showSummary() {
+      const accuracy = totalAnswered > 0
+        ? Math.round((correctAnswers / totalAnswered) * 100)
+        : 0;
+      const avgTime = totalAnswered > 0
+        ? (totalTimeSpent / totalAnswered).toFixed(2)
+        : '0.00';
+
+      summaryUI.classList.remove('hidden');
+      summaryText.innerHTML = `
+        <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
+        <p><strong>Total time:</strong> 600 seconds</p>
+        <p><strong>Problems answered:</strong> ${totalAnswered}</p>
+        <p><strong>Correct answers:</strong> ${correctAnswers} (${accuracy}%)</p>
+        <p><strong>Avg time per question:</strong> ${avgTime} seconds</p>
+      `;
+
+      updatePerformanceHistory(correctAnswers);
+      saveLeitnerSystem(tempLeitnerSystem);
+
+      const history = JSON.parse(localStorage.getItem("history") || "[]");
+      if (history.length > 1) {
+        trackBtn.classList.remove("hidden");
+      }
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function updatePerformanceHistory(score) {
+      const prev = JSON.parse(localStorage.getItem("history") || "[]");
+      prev.push(score);
+      localStorage.setItem("history", JSON.stringify(prev));
+    }
+
+    trackBtn.addEventListener("click", () => {
+      window.location.href = "stats.html";
+    });
+
+    submitBtn.addEventListener('click', checkAnswer);
+    answerEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') checkAnswer();
+    });
+    nextBtn.addEventListener('click', generateProblem);
   </script>
 </body>
 </html>
