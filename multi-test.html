@@ -529,7 +529,6 @@
       if (sessionScore > highScore) {
         highScore = sessionScore;
         localStorage.setItem("highScore", highScore);
-        celebrateHighScore();
       }
     
       summaryUI.classList.remove('hidden');
@@ -541,6 +540,10 @@
         <p><strong>All Time Score:</strong> ${allTimeScore}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
       `;
+
+      if (sessionScore == highScore) {
+        celebrateHighScore();
+      }
     
       updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
@@ -557,6 +560,7 @@
     }
 
     function celebrateHighScore() {
+      summaryText.innerHTML = "<h1 style="font-size: 2.5rem;">🎉🎉🎉 NEW HIGH SCORE! 🎉🎉🎉</h1>" + summaryText.innerHTML;
       var duration = 15 * 1000;
       var animationEnd = Date.now() + duration;
       var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
