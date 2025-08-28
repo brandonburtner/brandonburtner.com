@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Multiplication Flash Cards - Leitner System</title>
   <style>
+    html, body {
+    overscroll-behavior-y: contain; /* Prevents pull-to-refresh on Android Chrome */
+  }
     body {
       margin: 0;
       padding: 0;
@@ -15,21 +18,28 @@
       align-items: center;
       height: 100vh;
     }
+
     .global-timer {
       text-align: center;
       font-size: 1.5rem;
       font-weight: bold;
       margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
+
     .card {
       text-align: center;
       margin-top: 80px;
     }
+
     .problem {
       font-size: 4rem;
       font-weight: bold;
       margin-bottom: 1rem;
     }
+
     input[type="number"] {
       font-size: 2rem;
       padding: 0.5rem 1rem;
@@ -39,9 +49,10 @@
       border-radius: 8px;
       margin-bottom: 1rem;
     }
+
     button {
-      font-size: 1.5rem;
-      padding: 0.5rem 1.5rem;
+      font-size: 1.25rem;
+      padding: 0.5rem 1rem;
       border: none;
       border-radius: 8px;
       background-color: #007bff;
@@ -49,32 +60,53 @@
       cursor: pointer;
       margin: 0.5rem;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
+    button.selected {
+      background-color: #003366;
+    }
+
     .feedback {
       margin-top: 1rem;
       font-size: 1.5rem;
     }
+
     .timer {
       font-size: 1.25rem;
       margin-bottom: 0.75rem;
     }
+
     .difficulty-select,
     .summary-screen {
       text-align: center;
-      margin-top: 150px;
+      margin-top: 100px;
     }
-    #submitBtn, #nextBtn {
+
+    #submitBtn, #nextBtn, #playBtn {
       display: none;
     }
+
     .hidden {
       display: none;
     }
   </style>
 </head>
 <body>
-  <div class="global-timer hidden" id="globalTimer">Time remaining: 10:00</div>
+  <div class="global-timer hidden" id="globalTimerWrapper">
+    <div id="globalTimer">Time remaining: 10:00</div>
+    <button id="pausePlayBtn" aria-label="Pause" style="background: none; border: none; cursor: pointer;">
+      <svg id="pauseIcon" width="24" height="24" viewBox="0 0 24 24">
+        <rect x="6" y="4" width="4" height="16" fill="#000"/>
+        <rect x="14" y="4" width="4" height="16" fill="#000"/>
+      </svg>
+      <svg id="playIcon" class="hidden" width="24" height="24" viewBox="0 0 24 24">
+        <polygon points="6,4 20,12 6,20" fill="#000"/>
+      </svg>
+    </button>
+  </div>
 
   <div class="card hidden" id="card">
     <div class="timer" id="timer">Time left: </div>
@@ -87,11 +119,29 @@
     <div class="feedback" id="feedback"></div>
   </div>
 
+  <div id="pauseOverlay" class="hidden" style="text-align: center; margin-top: 100px;">
+    <h1 style="font-size: 3rem; font-weight: bold;">Paused</h1>
+    <button id="resumeBtn" aria-label="Resume" style="background: none; border: none; margin-top: 2rem; cursor: pointer;">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <polygon points="16,12 52,32 16,52" fill="#000"/>
+      </svg>
+    </button>
+  </div>
+
   <div class="difficulty-select" id="difficultySelect">
     <h2>Select Difficulty</h2>
-    <button onclick="setDifficulty('beginner')">Beginner</button>
-    <button onclick="setDifficulty('intermediate')">Intermediate</button>
-    <button onclick="setDifficulty('advanced')">Advanced</button>
+    <button onclick="setDifficulty('beginner', this)">Beginner</button>
+    <button onclick="setDifficulty('intermediate', this)">Intermediate</button>
+    <button onclick="setDifficulty('advanced', this)">Advanced</button>
+
+    <h2 style="margin-top: 2rem;">Select Time</h2>
+    <button onclick="setTime(60, this)">1 Minute</button>
+    <button onclick="setTime(300, this)">5 Minutes</button>
+    <button onclick="setTime(600, this)">10 Minutes</button>
+
+    <div style="margin-top: 2rem;">
+      <button id="playBtn" onclick="startSession()">Play</button>
+    </div>
   </div>
 
   <div class="summary-screen hidden" id="summaryScreen">
@@ -101,30 +151,41 @@
   </div>
 
   <script>
+    const globalTimerWrapper = document.getElementById('globalTimerWrapper');
+    const globalTimerEl = document.getElementById('globalTimer');
+    const pausePlayBtn = document.getElementById('pausePlayBtn');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const playIcon = document.getElementById('playIcon');
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const resumeBtn = document.getElementById('resumeBtn');
+
     const card = document.getElementById('card');
     const difficultyUI = document.getElementById('difficultySelect');
     const summaryUI = document.getElementById('summaryScreen');
+    const summaryText = document.getElementById('summaryText');
+    const trackBtn = document.getElementById('trackPerformanceBtn');
+
     const problemEl = document.getElementById('problem');
     const answerEl = document.getElementById('answer');
     const feedbackEl = document.getElementById('feedback');
     const submitBtn = document.getElementById('submitBtn');
     const nextBtn = document.getElementById('nextBtn');
     const timerEl = document.getElementById('timer');
-    const globalTimerEl = document.getElementById('globalTimer');
-    const summaryText = document.getElementById('summaryText');
-    const trackBtn = document.getElementById('trackPerformanceBtn');
+    const playBtn = document.getElementById('playBtn');
 
+    let isPaused = false;
     let currentDifficulty = '';
-    let timeRemaining = 0;
-    let questionStartTime = null;
-    let questionTimeLimit = 0;
     let globalTimeRemaining = 600;
+    let userSelectedTime = null;
     let sessionActive = false;
-    let timedOut = false;
     let globalTimer;
     let timer;
     let currentQuestion = null;
     let currentBox = null;
+    let questionStartTime = null;
+    let questionTimeLimit = 0;
+    let timeRemaining = 0;
+    let timedOut = false;
 
     let totalAnswered = 0;
     let correctAnswers = 0;
@@ -139,26 +200,84 @@
     let permanentLeitnerSystem = loadLeitnerSystem();
     let tempLeitnerSystem = JSON.parse(JSON.stringify(permanentLeitnerSystem));
 
-    function saveLeitnerSystem(system) {
-      localStorage.setItem('leitnerSystem', JSON.stringify(system));
+    pausePlayBtn.addEventListener('click', togglePause);
+    resumeBtn.addEventListener('click', togglePause);
+
+    function togglePause() {
+      isPaused = !isPaused;
+      if (isPaused) {
+        clearInterval(globalTimer);
+        card.classList.add('hidden');
+        pauseOverlay.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+        playIcon.classList.remove('hidden');
+      } else {
+        startGlobalTimer();
+        card.classList.remove('hidden');
+        pauseOverlay.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+        playIcon.classList.add('hidden');
+      }
     }
 
-    function loadLeitnerSystem() {
-      let data = localStorage.getItem('leitnerSystem');
-      if (!data) {
-        let allQs = [];
-        for (let i = 1; i <= 12; i++) {
-          for (let j = 1; j <= 12; j++) {
-            allQs.push(`${i}x${j}`);
+    function setDifficulty(level, btn) {
+      currentDifficulty = level;
+      highlightButton(btn, 'difficultySelect', ['Beginner', 'Intermediate', 'Advanced']);
+      updatePlayButtonState();
+    }
+
+    function setTime(seconds, btn) {
+      userSelectedTime = seconds;
+      highlightButton(btn, 'difficultySelect', ['1 Minute', '5 Minutes', '10 Minutes']);
+      updatePlayButtonState();
+    }
+
+    function highlightButton(clickedBtn, containerId, labels) {
+      const buttons = document.querySelectorAll(`#${containerId} button`);
+      buttons.forEach(btn => {
+        if (labels.some(label => btn.textContent.includes(label))) {
+          btn.classList.remove('selected');
+        }
+      });
+      clickedBtn.classList.add('selected');
+    }
+
+    function updatePlayButtonState() {
+      if (currentDifficulty && userSelectedTime) {
+        playBtn.style.display = 'inline-block';
+      }
+    }
+
+    function startSession() {
+      tempLeitnerSystem = JSON.parse(JSON.stringify(permanentLeitnerSystem));
+      difficultyUI.classList.add('hidden');
+      globalTimeRemaining = userSelectedTime;
+      globalTimerWrapper.classList.remove('hidden');
+      card.classList.remove('hidden');
+      sessionActive = true;
+      totalAnswered = 0;
+      correctAnswers = 0;
+      totalTimeSpent = 0;
+      globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
+      startGlobalTimer();
+      generateProblem();
+    }
+
+    function startGlobalTimer() {
+      clearInterval(globalTimer);
+      globalTimer = setInterval(() => {
+        if (!isPaused) {
+          globalTimeRemaining--;
+          globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
+          if (globalTimeRemaining <= 0) {
+            clearInterval(globalTimer);
+            globalTimerEl.textContent = `⏱️ Time's up!`;
+            sessionActive = false;
+            disableInput();
+            showSummary();
           }
         }
-        return {
-          boxOne: allQs,
-          boxTwo: [],
-          boxThree: []
-        };
-      }
-      return JSON.parse(data);
+      }, 1000);
     }
 
     function formatTime(seconds) {
@@ -167,84 +286,11 @@
       return `${m}:${s}`;
     }
 
-    function pickNextQuestion() {
-      const boxWeights = [
-        { box: 'boxOne', questions: tempLeitnerSystem.boxOne, weightPerQ: 7 },
-        { box: 'boxTwo', questions: tempLeitnerSystem.boxTwo, weightPerQ: 2 },
-        { box: 'boxThree', questions: tempLeitnerSystem.boxThree, weightPerQ: 1 }
-      ].filter(b => b.questions.length > 0);
-
-      const weightedPool = [];
-      boxWeights.forEach(b => {
-        const weight = b.questions.length * b.weightPerQ;
-        for (let i = 0; i < weight; i++) {
-          weightedPool.push(b.box);
-        }
-      });
-
-      if (weightedPool.length === 0) return null;
-
-      const selectedBox = weightedPool[Math.floor(Math.random() * weightedPool.length)];
-      const questionPool = tempLeitnerSystem[selectedBox];
-      const question = questionPool[Math.floor(Math.random() * questionPool.length)];
-      return { box: selectedBox, question };
-    }
-
-    function setDifficulty(level) {
-      currentDifficulty = level;
-      difficultyUI.classList.add('hidden');
-      globalTimerEl.classList.remove('hidden');
-      card.classList.remove('hidden');
-      startGlobalTimer();
-      generateProblem();
-    }
-
-    function startGlobalTimer() {
-      globalTimeRemaining = 600;
-      sessionActive = true;
-      globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
-
-      globalTimer = setInterval(() => {
-        globalTimeRemaining--;
-        globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
-        if (globalTimeRemaining <= 0) {
-          clearInterval(globalTimer);
-          globalTimerEl.textContent = `⏱️ Time's up!`;
-          sessionActive = false;
-          disableInput();
-          showSummary();
-        }
-      }, 1000);
-    }
-
-    function startTimer() {
-      clearInterval(timer);
-      questionTimeLimit = timeLimits[currentDifficulty];
-      timeRemaining = questionTimeLimit;
-      timerEl.textContent = `Time left: ${timeRemaining}s`;
-      timedOut = false;
-      questionStartTime = Date.now();
-
-      timer = setInterval(() => {
-        timeRemaining--;
-        if (timeRemaining >= 0) {
-          timerEl.textContent = `Time left: ${timeRemaining}s`;
-        }
-        if (timeRemaining === 0) {
-          timedOut = true;
-          clearInterval(timer);
-          timerEl.textContent = `⏱️ Time's up!`;
-        }
-      }, 1000);
-    }
-
     function generateProblem() {
       const next = pickNextQuestion();
       if (!next) return;
-
       currentQuestion = next.question;
       currentBox = next.box;
-
       const [a, b] = currentQuestion.split("x").map(Number);
       problemEl.textContent = `${a} × ${b}`;
       answerEl.value = '';
@@ -258,37 +304,57 @@
       startTimer();
     }
 
-    function moveQuestion(correct) {
-      const from = currentBox;
-      const q = currentQuestion;
-      const remove = (arr) => arr.splice(arr.indexOf(q), 1);
-
-      if (from === 'boxOne') {
-        remove(tempLeitnerSystem.boxOne);
-        correct ? tempLeitnerSystem.boxTwo.push(q) : tempLeitnerSystem.boxOne.push(q);
-      } else if (from === 'boxTwo') {
-        remove(tempLeitnerSystem.boxTwo);
-        correct ? tempLeitnerSystem.boxThree.push(q) : tempLeitnerSystem.boxOne.push(q);
-      } else if (from === 'boxThree') {
-        remove(tempLeitnerSystem.boxThree);
-        correct ? tempLeitnerSystem.boxThree.push(q) : tempLeitnerSystem.boxTwo.push(q);
+    function startTimer() {
+      clearInterval(timer);
+      questionTimeLimit = timeLimits[currentDifficulty];
+      timeRemaining = questionTimeLimit;
+      timerEl.textContent = `Time left: ${timeRemaining}s`;
+      timedOut = false;
+      questionStartTime = Date.now();
+      timer = setInterval(() => {
+      if (!isPaused) {
+        timeRemaining--;
+        if (timeRemaining >= 0) {
+          timerEl.textContent = `Time left: ${timeRemaining}s`;
+        }
+        if (timeRemaining === 0) {
+          timedOut = true;
+          clearInterval(timer);
+          timerEl.textContent = `⏱️ Time's up!`;
+        }
       }
+    }, 1000);
+    }
+
+    function pickNextQuestion() {
+      const boxWeights = [
+  { box: 'boxOne', questions: permanentLeitnerSystem.boxOne, weightPerQ: 7 },
+  { box: 'boxTwo', questions: permanentLeitnerSystem.boxTwo, weightPerQ: 2 },
+  { box: 'boxThree', questions: permanentLeitnerSystem.boxThree, weightPerQ: 1 }
+].filter(b => b.questions.length > 0);
+      const weightedPool = [];
+      boxWeights.forEach(b => {
+        const weight = b.questions.length * b.weightPerQ;
+        for (let i = 0; i < weight; i++) weightedPool.push(b.box);
+      });
+      if (weightedPool.length === 0) return null;
+      const selectedBox = weightedPool[Math.floor(Math.random() * weightedPool.length)];
+      const questionPool = permanentLeitnerSystem[selectedBox];
+      const question = questionPool[Math.floor(Math.random() * questionPool.length)];
+      return { box: selectedBox, question };
     }
 
     function checkAnswer() {
       if (!sessionActive) return;
-
       const [a, b] = currentQuestion.split("x").map(Number);
       const correctAnswer = a * b;
       const userAnswer = parseInt(answerEl.value, 10);
       const elapsed = Math.floor((Date.now() - questionStartTime) / 1000);
       const timeUsed = Math.min(elapsed, questionTimeLimit);
-
       totalAnswered++;
       totalTimeSpent += timeUsed;
 
       let feedback = '';
-
       if (userAnswer === correctAnswer && timedOut) {
         feedback = '✅ Correct, but ⏱️ time ran out.';
         feedbackEl.style.color = 'orange';
@@ -319,25 +385,18 @@
     }
 
     function showSummary() {
-      const accuracy = totalAnswered > 0
-        ? Math.round((correctAnswers / totalAnswered) * 100)
-        : 0;
-      const avgTime = totalAnswered > 0
-        ? (totalTimeSpent / totalAnswered).toFixed(2)
-        : '0.00';
-
+      const accuracy = totalAnswered > 0 ? Math.round((correctAnswers / totalAnswered) * 100) : 0;
+      const avgTime = totalAnswered > 0 ? (totalTimeSpent / totalAnswered).toFixed(2) : '0.00';
       summaryUI.classList.remove('hidden');
       summaryText.innerHTML = `
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
-        <p><strong>Total time:</strong> ${formatTime(600)}</p>
+        <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
         <p><strong>Problems answered:</strong> ${totalAnswered}</p>
         <p><strong>Correct answers:</strong> ${correctAnswers} (${accuracy}%)</p>
         <p><strong>Avg time per question:</strong> ${avgTime} seconds</p>
       `;
-
       updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
-
       const history = JSON.parse(localStorage.getItem("history") || "[]");
       if (history.length > 1) {
         trackBtn.classList.remove("hidden");
@@ -354,15 +413,52 @@
       localStorage.setItem("history", JSON.stringify(prev));
     }
 
-    trackBtn.addEventListener("click", () => {
-      window.location.href = "stats.html";
-    });
+    function moveQuestion(correct) {
+      const from = currentBox;
+      const q = currentQuestion;
+      const remove = (arr) => arr.splice(arr.indexOf(q), 1);
+      if (from === 'boxOne') {
+        remove(tempLeitnerSystem.boxOne);
+        correct ? tempLeitnerSystem.boxTwo.push(q) : tempLeitnerSystem.boxOne.push(q);
+      } else if (from === 'boxTwo') {
+        remove(tempLeitnerSystem.boxTwo);
+        correct ? tempLeitnerSystem.boxThree.push(q) : tempLeitnerSystem.boxOne.push(q);
+      } else if (from === 'boxThree') {
+        remove(tempLeitnerSystem.boxThree);
+        correct ? tempLeitnerSystem.boxThree.push(q) : tempLeitnerSystem.boxTwo.push(q);
+      }
+    }
+
+    function saveLeitnerSystem(system) {
+      localStorage.setItem('leitnerSystem', JSON.stringify(system));
+    }
+
+    function loadLeitnerSystem() {
+      let data = localStorage.getItem('leitnerSystem');
+      if (!data) {
+        let allQs = [];
+        for (let i = 1; i <= 12; i++) {
+          for (let j = 1; j <= 12; j++) {
+            allQs.push(`${i}x${j}`);
+          }
+        }
+        return {
+          boxOne: allQs,
+          boxTwo: [],
+          boxThree: []
+        };
+      }
+      return JSON.parse(data);
+    }
 
     submitBtn.addEventListener('click', checkAnswer);
     answerEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') checkAnswer();
     });
     nextBtn.addEventListener('click', generateProblem);
+    trackBtn.addEventListener('click', () => {
+      window.location.href = "stats.html";
+    });
   </script>
 </body>
 </html>
