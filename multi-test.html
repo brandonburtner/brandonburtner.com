@@ -278,6 +278,8 @@
     const summaryUI = document.getElementById('summaryScreen');
     const summaryText = document.getElementById('summaryText');
     const startOverBtn = document.getElementById("startOverBtn");
+    const shopButton = document.getElementById("shopButton");
+    const historyButton = document.getElementById("historyButton");
 
     const problemEl = document.getElementById('problem');
     const answerEl = document.getElementById('answer');
@@ -527,6 +529,8 @@
 
     function showSummary() {
       startOverBtn.disabled = true;
+      shopButton.disabled = true;
+      historyButton.disabled = true;
       globalTimerWrapper.classList.add('hidden');
       clearSessionData();
       const accuracy = totalAnswered > 0
@@ -561,6 +565,8 @@
 
       setTimeout(() => {
         startOverBtn.disabled = false;
+        shopButton.disabled = false;
+        historyButton.disabled = false;
       }, 3000);
     }
 
