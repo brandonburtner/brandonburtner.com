@@ -131,6 +131,10 @@
   </style>
 </head>
 <body>
+  <div id="topBar">
+    <div id="totalPointsDisplay">Total Points: </div>
+    <button id="shopBtn" aria-label="Shop">🛒</button>
+  </div>
     <div class="global-timer hidden" id="globalTimerWrapper">
       <div class="timer-left">
         <div id="globalTimer">Time remaining: 10:00</div>
@@ -382,6 +386,8 @@
       globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
       startGlobalTimer();
       generateProblem();
+      document.getElementById("topBar").classList.add("hidden");
+
     }
 
     function startGlobalTimer() {
@@ -516,6 +522,7 @@
 
     function showSummary() {
       globalTimerWrapper.classList.add('hidden');
+      document.getElementById("topBar").classList.remove("hidden");
       clearSessionData();
       const accuracy = totalAnswered > 0
         ? Math.round((correctAnswers / totalAnswered) * 100)
