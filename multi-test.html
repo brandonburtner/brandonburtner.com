@@ -124,14 +124,6 @@
   outline: none;
   background: none;
 }
-    #topBar {
-      display: flex;
-    }
-
-    #shopBtn {
-      background-color: transparent;
-      border: none;
-    }
 
     .hidden {
       display: none;
@@ -139,10 +131,6 @@
   </style>
 </head>
 <body>
-  <div id="topBar">
-    <div id="totalPointsDisplay">Total Points: 0</div>
-    <!-- <button id="shopBtn" aria-label="Shop">🛒</button> -->
-  </div>
     <div class="global-timer hidden" id="globalTimerWrapper">
       <div class="timer-left">
         <div id="globalTimer">Time remaining: 10:00</div>
@@ -394,8 +382,6 @@
       globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
       startGlobalTimer();
       generateProblem();
-      document.getElementById("topBar").classList.add("hidden");
-
     }
 
     function startGlobalTimer() {
@@ -530,7 +516,6 @@
 
     function showSummary() {
       globalTimerWrapper.classList.add('hidden');
-      document.getElementById("topBar").classList.remove("hidden");
       clearSessionData();
       const accuracy = totalAnswered > 0
         ? Math.round((correctAnswers / totalAnswered) * 100)
@@ -553,6 +538,7 @@
         <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
         <p><strong>Correct answers:</strong> ${correctDisplay}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
+        <p><strong>Total Points:</strong> <a onclick="launchStore">${allTimeScore}</a></p>
       `;
 
       if (sessionScore == highScore) {
@@ -635,8 +621,8 @@
       return JSON.parse(data);
     }
 
-    function generateTotalPoints() {
-      document.getElementById("totalPointsDisplay").innerHTML = "Total Points: " + allTimeScore;
+    function launchStore() {
+     window.alert("Hello World");
     }
 
     submitBtn.addEventListener('click', checkAnswer);
@@ -652,7 +638,6 @@
           resumeSession(JSON.parse(saved));
         }
       }
-      generateTotalPoints();
     };
   </script>
 </body>
