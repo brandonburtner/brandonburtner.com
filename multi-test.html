@@ -6,43 +6,28 @@
   <title>Multiplication Flash Cards - Leitner System</title>
   <style>
     html, body {
-      overscroll-behavior-y: contain;
+    overscroll-behavior-y: contain; /* Prevents pull-to-refresh on Android Chrome */
+  }
+    body {
       margin: 0;
       padding: 0;
       background-color: #f9f9f9;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    #appContainer {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 0 1rem;
-      box-sizing: border-box;
-      position: relative;
-    }
-
-    .hidden { display: none; }
-
-    #topBar {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      padding: 1rem 0;
+      height: 100vh;
     }
 
     .global-timer {
-      justify-content: space-between;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 20px;
+      display: flex;
       align-items: center;
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 0 1rem;
-      box-sizing: border-box;
-      display: none;
+      gap: 1rem;
     }
-
-    .global-timer:not(.hidden) { display: flex; }
 
     .card {
       text-align: center;
@@ -76,92 +61,135 @@
       margin: 0.5rem;
     }
 
-    button:hover { background-color: #0056b3; }
-    button.selected { background-color: #003366; }
+    button:hover {
+      background-color: #0056b3;
+    }
 
-    .feedback { margin-top: 1rem; font-size: 1.5rem; }
-    .timer { font-size: 1.25rem; margin-bottom: 0.75rem; }
+    button.selected {
+      background-color: #003366;
+    }
+
+    .feedback {
+      margin-top: 1rem;
+      font-size: 1.5rem;
+    }
+
+    .timer {
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
 
     .difficulty-select,
-    .summary-screen,
-    #shopScreen {
+    .summary-screen {
       text-align: center;
       margin-top: 100px;
     }
 
-    #submitBtn, #nextBtn, #playBtn { display: none; }
-    #pausePlayBtn { outline: none; background: none; }
+    #submitBtn, #nextBtn, #playBtn {
+      display: none;
+    }
+
+    .global-timer {
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  display: none; /* respect the hidden class */
+}
+
+.global-timer:not(.hidden) {
+  display: flex;
+}
+
+#globalTimer {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+#sessionScore {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.timer-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+    #pausePlayBtn {
+  outline: none;
+  background: none;
+}
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div id="appContainer">
-    <div id="topBar" class="hidden">
-      <div id="totalPointsDisplay">Total Points: 0</div>
-      <button id="shopBtn" aria-label="Shop">🛒</button>
-    </div>
-
-    <div class="difficulty-select" id="difficultySelect">
-      <h2>Select Difficulty</h2>
-      <button onclick="setDifficulty('beginner', this)">Beginner</button>
-      <button onclick="setDifficulty('intermediate', this)">Intermediate</button>
-      <button onclick="setDifficulty('advanced', this)">Advanced</button>
-
-      <h2 style="margin-top: 2rem;">Select Time</h2>
-      <button onclick="setTime(60, this)">1 Minute</button>
-      <button onclick="setTime(300, this)">5 Minutes</button>
-      <button onclick="setTime(600, this)">10 Minutes</button>
-
-      <div style="margin-top: 2rem;">
-        <button id="playBtn" onclick="startSession()">Play</button>
+    <div class="global-timer hidden" id="globalTimerWrapper">
+      <div class="timer-left">
+        <div id="globalTimer">Time remaining: 10:00</div>
+        <button id="pausePlayBtn" aria-label="Pause">
+          <svg id="pauseIcon" width="24" height="24" viewBox="0 0 24 24">
+            <rect x="6" y="4" width="4" height="16" fill="#000"/>
+            <rect x="14" y="4" width="4" height="16" fill="#000"/>
+          </svg>
+          <svg id="playIcon" class="hidden" width="24" height="24" viewBox="0 0 24 24">
+            <polygon points="6,4 20,12 6,20" fill="#000"/>
+          </svg>
+        </button>
       </div>
+      <div id="sessionScore">Score: 0</div>
     </div>
 
-    <div class="card hidden" id="card">
-      <div class="timer" id="timer"></div>
-      <div class="problem" id="problem"></div>
-      <input type="number" id="answer" placeholder="Answer" />
-      <div>
-        <button id="submitBtn">Submit</button>
-        <button id="nextBtn">Next</button>
-      </div>
-      <div class="feedback" id="feedback"></div>
+  <div class="card hidden" id="card">
+    <div class="timer" id="timer">Time left: </div>
+    <div class="problem" id="problem">3 × 4</div>
+    <input type="number" id="answer" placeholder="Answer" />
+    <div>
+      <button id="submitBtn">Submit</button>
+      <button id="nextBtn">Next</button>
     </div>
-
-    <div class="summary-screen hidden" id="summaryScreen">
-      <p id="summaryText"></p>
-      <button id="startOverBtn">Start Over</button>
-    </div>
-
-    <div id="shopScreen" class="hidden">
-      <button id="shopBackBtn" style="position: absolute; top: 1rem; left: 1rem; background: none; border: none; font-size: 2rem; cursor: pointer;">←</button>
-      <h1 style="font-size: 2.5rem;">🛍️ Coming Soon</h1>
-    </div>
-  </div>
-
-  <div class="global-timer hidden" id="globalTimerWrapper">
-    <div class="timer-left">
-      <div id="globalTimer">Time remaining: 10:00</div>
-      <button id="pausePlayBtn" aria-label="Pause">⏸️</button>
-    </div>
-    <div id="sessionScore">Score: 0</div>
+    <div class="feedback" id="feedback"></div>
   </div>
 
   <div id="pauseOverlay" class="hidden" style="text-align: center; margin-top: 100px;">
     <h1 style="font-size: 3rem; font-weight: bold;">Paused</h1>
-    <button id="resumeBtn" style="background: none; border: none; font-size: 2rem;">▶️</button>
+    <button id="resumeBtn" aria-label="Resume" style="background: none; border: none; margin-top: 2rem; cursor: pointer;">
+      <svg width="64" height="64" viewBox="0 0 64 64">
+        <polygon points="16,12 52,32 16,52" fill="#000"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="difficulty-select" id="difficultySelect">
+    <h2>Select Difficulty</h2>
+    <button onclick="setDifficulty('beginner', this)">Beginner</button>
+    <button onclick="setDifficulty('intermediate', this)">Intermediate</button>
+    <button onclick="setDifficulty('advanced', this)">Advanced</button>
+
+    <h2 style="margin-top: 2rem;">Select Time</h2>
+    <button onclick="setTime(60, this)">1 Minute</button>
+    <button onclick="setTime(300, this)">5 Minutes</button>
+    <button onclick="setTime(600, this)">10 Minutes</button>
+
+    <div style="margin-top: 2rem;">
+      <button id="playBtn" onclick="startSession()">Play</button>
+    </div>
+  </div>
+
+  <div class="summary-screen hidden" id="summaryScreen">
+    <p id="summaryText"></p>
+    <button id="startOverBtn">Start Over</button>
   </div>
 
   <script src="https://brandonburtner.com/confetti.browser.js"></script>
   <script>
-
-    const topBar = document.getElementById('topBar');
-    const shopBtn = document.getElementById('shopBtn');
-    const shopBackBtn = document.getElementById('shopBackBtn');
-    const shopScreen = document.getElementById('shopScreen');
-    const difficultyUI = document.getElementById('difficultySelect');
-    const summaryUI = document.getElementById('summaryScreen');
-    let previousScreen = null;
-
     const SESSION_KEY = 'activeSession';
 
     function saveSessionData() {
@@ -248,14 +276,6 @@
     const timerEl = document.getElementById('timer');
     const playBtn = document.getElementById('playBtn');
 
-    const topBar = document.getElementById('topBar');
-    const totalPointsDisplay = document.getElementById('totalPointsDisplay');
-    const shopBtn = document.getElementById('shopBtn');
-    const shopScreen = document.getElementById('shopScreen');
-    const shopBackBtn = document.getElementById('shopBackBtn');
-    
-    let previousScreen = null; // to track where the shop was entered from
-
     let isPaused = false;
     let currentDifficulty = '';
     let globalTimeRemaining = 600;
@@ -288,8 +308,6 @@
     startOverBtn.addEventListener("click", () => {
       summaryUI.classList.add('hidden');
       difficultyUI.classList.remove('hidden');
-      topBar.classList.remove('hidden');
-      updateTotalPointsDisplay();
     });
 
     function updateSessionScore(correct) {
@@ -364,7 +382,6 @@
       globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
       startGlobalTimer();
       generateProblem();
-      topBar.classList.add('hidden'); // hide top bar during quiz
     }
 
     function startGlobalTimer() {
@@ -529,8 +546,6 @@
     
       updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
-      topBar.classList.remove('hidden');
-      updateTotalPointsDisplay();
     }
 
     function capitalize(str) {
@@ -605,10 +620,6 @@
       return JSON.parse(data);
     }
 
-    function updateTotalPointsDisplay() {
-      totalPointsDisplay.textContent = `Total Points: ${allTimeScore}`;
-    }
-
     submitBtn.addEventListener('click', checkAnswer);
     answerEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') checkAnswer();
@@ -622,26 +633,7 @@
           resumeSession(JSON.parse(saved));
         }
       }
-      updateTotalPointsDisplay();
     };
-
-    shopBtn.addEventListener('click', () => {
-      previousScreen = summaryUI.classList.contains('hidden') ? 'intro' : 'recap';
-      difficultyUI.classList.add('hidden');
-      summaryUI.classList.add('hidden');
-      topBar.classList.add('hidden');
-      shopScreen.classList.remove('hidden');
-    });
-
-    shopBackBtn.addEventListener('click', () => {
-      shopScreen.classList.add('hidden');
-      if (previousScreen === 'intro') {
-        difficultyUI.classList.remove('hidden');
-      } else {
-        summaryUI.classList.remove('hidden');
-      }
-      topBar.classList.remove('hidden');
-    });
   </script>
 </body>
 </html>
