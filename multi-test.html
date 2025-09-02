@@ -140,8 +140,8 @@
 </head>
 <body>
   <div id="topBar">
-    <div id="totalPointsDisplay">Total Points: </div>
-    <button id="shopBtn" aria-label="Shop">🛒</button>
+    <div id="totalPointsDisplay">Total Points: 0</div>
+    <!-- <button id="shopBtn" aria-label="Shop">🛒</button> -->
   </div>
     <div class="global-timer hidden" id="globalTimerWrapper">
       <div class="timer-left">
@@ -635,6 +635,10 @@
       return JSON.parse(data);
     }
 
+    function generateTotalPoints() {
+      document.getElementById("totalPointsDisplay").innerHTML = "Total Points: " + allTimeScore;
+    }
+
     submitBtn.addEventListener('click', checkAnswer);
     answerEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') checkAnswer();
@@ -648,6 +652,7 @@
           resumeSession(JSON.parse(saved));
         }
       }
+      generateTotalPoints();
     };
   </script>
 </body>
