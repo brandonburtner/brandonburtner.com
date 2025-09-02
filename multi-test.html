@@ -167,6 +167,22 @@
     </button>
   </div>
 
+  <!-- POINTS + SHOP HEADER (Intro/Recap screens only) -->
+<div id="topBar" class="hidden" style="width: 100%; max-width: 800px; margin: 1rem auto; display: flex; justify-content: space-between; align-items: center; padding: 0 1rem; box-sizing: border-box;">
+  <div id="totalPointsDisplay" style="font-size: 1.25rem; font-weight: bold;">Total Points: 0</div>
+  <button id="shopBtn" style="background: none; border: none; cursor: pointer;" aria-label="Shop">
+    🛒
+  </button>
+</div>
+
+<!-- SHOP SCREEN -->
+<div id="shopScreen" class="hidden" style="text-align: center; margin-top: 100px;">
+  <button id="shopBackBtn" style="position: absolute; top: 1rem; left: 1rem; background: none; border: none; font-size: 2rem; cursor: pointer;" aria-label="Back">
+    ←
+  </button>
+  <h1 style="font-size: 2.5rem;">🛍️ Coming Soon</h1>
+</div>
+  
   <div class="difficulty-select" id="difficultySelect">
     <h2>Select Difficulty</h2>
     <button onclick="setDifficulty('beginner', this)">Beginner</button>
@@ -188,7 +204,7 @@
     <button id="startOverBtn">Start Over</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
+  <script src="https://brandonburtner.com/confetti.browser.js"></script>
   <script>
     const SESSION_KEY = 'activeSession';
 
@@ -276,6 +292,14 @@
     const timerEl = document.getElementById('timer');
     const playBtn = document.getElementById('playBtn');
 
+    const topBar = document.getElementById('topBar');
+    const totalPointsDisplay = document.getElementById('totalPointsDisplay');
+    const shopBtn = document.getElementById('shopBtn');
+    const shopScreen = document.getElementById('shopScreen');
+    const shopBackBtn = document.getElementById('shopBackBtn');
+    
+    let previousScreen = null; // to track where the shop was entered from
+
     let isPaused = false;
     let currentDifficulty = '';
     let globalTimeRemaining = 600;
@@ -308,6 +332,8 @@
     startOverBtn.addEventListener("click", () => {
       summaryUI.classList.add('hidden');
       difficultyUI.classList.remove('hidden');
+      topBar.classList.remove('hidden');
+      updateTotalPointsDisplay();
     });
 
     function updateSessionScore(correct) {
@@ -382,6 +408,7 @@
       globalTimerEl.textContent = `Time remaining: ${formatTime(globalTimeRemaining)}`;
       startGlobalTimer();
       generateProblem();
+      topBar.classList.add('hidden'); // hide top bar during quiz
     }
 
     function startGlobalTimer() {
@@ -537,7 +564,6 @@
         <p><strong>Difficulty:</strong> ${capitalize(currentDifficulty)}</p>
         <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
         <p><strong>Correct answers:</strong> ${correctDisplay}</p>
-        <p><strong>All Time Score:</strong> ${allTimeScore}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
       `;
 
@@ -547,6 +573,8 @@
     
       updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
+      topBar.classList.remove('hidden');
+      updateTotalPointsDisplay();
     }
 
     function capitalize(str) {
@@ -621,6 +649,28 @@
       return JSON.parse(data);
     }
 
+    function updateTotalPointsDisplay() {
+      totalPointsDisplay.textContent = `Total Points: ${allTimeScore}`;
+    }
+    
+    shopBtn.addEventListener("click", () => {
+      previousScreen = summaryUI.classList.contains('hidden') ? 'intro' : 'recap';
+      difficultyUI.classList.add('hidden');
+      summaryUI.classList.add('hidden');
+      topBar.classList.add('hidden');
+      shopScreen.classList.remove('hidden');
+    });
+    
+    shopBackBtn.addEventListener("click", () => {
+      shopScreen.classList.add('hidden');
+      if (previousScreen === 'intro') {
+        difficultyUI.classList.remove('hidden');
+      } else {
+        summaryUI.classList.remove('hidden');
+      }
+      topBar.classList.remove('hidden');
+    });
+
     submitBtn.addEventListener('click', checkAnswer);
     answerEl.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') checkAnswer();
@@ -634,6 +684,7 @@
           resumeSession(JSON.parse(saved));
         }
       }
+      updateTotalPointsDisplay();
     };
   </script>
 </body>
