@@ -59,6 +59,8 @@
       color: white;
       cursor: pointer;
       margin: 0.5rem;
+      opacity: 1;
+      transition: opacity 0.5s ease;
     }
 
     button:hover {
@@ -72,8 +74,8 @@
     button:disabled {
       background-color: #d6d6d6; 
       color: #a0a0a0;          
-      cursor: not-allowed;      
-      opacity: 0.8;  
+      cursor: default;      
+      opacity: 0;
     }
 
     .feedback {
@@ -546,7 +548,6 @@
         <p><strong>Total time:</strong> ${formatTime(userSelectedTime)}</p>
         <p><strong>Correct answers:</strong> ${correctDisplay}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
-        <p><strong>Total Points:</strong> <a onclick="launchStore()">${allTimeScore}</a></p>
       `;
 
       if (sessionScore == highScore) {
