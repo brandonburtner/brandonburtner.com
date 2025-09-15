@@ -584,7 +584,7 @@ function saveProgressToCookie() {
   const encoded = encodeURIComponent(JSON.stringify(existingData));
 
   // Set/update the cookie
-  document.cookie = `${COOKIE_NAME}=${encoded}; max-age=${60 * 60 * 24 * MAX_DAYS}; path=/`;
+  document.cookie = `${COOKIE_NAME}=${encoded}; max-age=${60 * 60 * 24 * MAX_DAYS}; path=/; SameSite=Lax; Secure`;
 }
 
     function capitalize(str) {
