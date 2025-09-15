@@ -195,6 +195,14 @@
   <div class="summary-screen hidden" id="summaryScreen">
     <p id="summaryText"></p>
     <button id="startOverBtn">Start Over</button>
+    <button id="historyBtn">History</button>
+  </div>
+
+  <div class="summary-screen hidden" id="historyScreen">
+    <canvas id="historyChart" width="800" height="400"></canvas>
+    <div style="margin-top: 2rem;">
+      <button id="goBackBtn">Go Back</button>
+    </div>
   </div>
 
   <script src="https://brandonburtner.com/confetti.browser.js"></script>
@@ -318,6 +326,10 @@
       summaryUI.classList.add('hidden');
       difficultyUI.classList.remove('hidden');
     });
+    document.getElementById("goBackBtn").addEventListener("click", () => {
+    document.getElementById('historyScreen').classList.add('hidden');
+    summaryUI.classList.remove('hidden');
+  });
 
     function updateSessionScore(correct) {
       const rule = scoreRules[currentDifficulty];
@@ -525,6 +537,9 @@
 
     function showSummary() {
       startOverBtn.disabled = true;
+      const historyBtn = document.getElementById("historyBtn");
+      historyBtn.disabled = true;
+    
       globalTimerWrapper.classList.add('hidden');
       clearSessionData();
       const accuracy = totalAnswered > 0
@@ -532,7 +547,6 @@
         : 0;
       const correctDisplay = `${correctAnswers}/${totalAnswered} (${accuracy}%)`;
     
-      // Update all-time and high scores
       allTimeScore += sessionScore;
       localStorage.setItem("allTimeScore", allTimeScore);
     
@@ -549,16 +563,19 @@
         <p><strong>Correct answers:</strong> ${correctDisplay}</p>
         <p><strong>High Score:</strong> ${highScore}</p>
       `;
-
+    
       if (sessionScore == highScore) {
         celebrateHighScore();
       }
     
       saveLeitnerSystem(tempLeitnerSystem);
-      saveProgressToLocalStorage();
-
+      saveProgressToLocalStorage(); // if you've switched from cookies
+    
       setTimeout(() => {
         startOverBtn.disabled = false;
+        historyBtn.disabled = false;
+    
+        historyBtn.onclick = showHistory;
       }, 3000);
     }
 
@@ -658,6 +675,107 @@ function saveProgressToLocalStorage() {
         }
       }
     };
+
+    function showHistory() {
+      summaryUI.classList.add('hidden');
+      document.getElementById('historyScreen').classList.remove('hidden');
+      renderHistoryChart();
+    }
+    
+    function renderHistoryChart() {
+      const rawData = JSON.parse(localStorage.getItem("userProgress") || "[]");
+      const datasets = {};
+    
+      rawData.forEach((entry, i) => {
+        const label = `${entry.timeLength / 60} Minute`;
+        if (!datasets[label]) datasets[label] = { label, data: [], borderColor: '', fill: false };
+    
+        datasets[label].data.push({
+          x: i + 1,
+          y: entry.score,
+          meta: entry
+        });
+      });
+    
+      const colors = {
+        "1 Minute": "#007bff",
+        "5 Minute": "#28a745",
+        "10 Minute": "#dc3545"
+      };
+    
+      const finalDatasets = Object.values(datasets).map(ds => {
+        const color = colors[ds.label] || '#000';
+        return {
+          label: ds.label,
+          data: ds.data,
+          borderColor: color,
+          backgroundColor: color,
+          tension: 0.3,
+          pointRadius: 5,
+          pointHoverRadius: 8,
+          parsing: false,
+          segment: {
+            borderDash: ctx => ctx.p0.skip || ctx.p1.skip ? [6, 6] : undefined,
+          },
+        };
+      });
+    
+      const ctx = document.getElementById('historyChart').getContext('2d');
+      if (window.historyChart) window.historyChart.destroy();
+    
+      window.historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          datasets: finalDatasets
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => {
+                  const meta = ctx.raw.meta;
+                  return [
+                    `Score: ${meta.score}`,
+                    `Time: ${meta.timeLength / 60} min`,
+                    `Difficulty: ${meta.difficulty}`,
+                    `Timestamp: ${new Date(meta.timestamp).toLocaleString()}`
+                  ];
+                }
+              }
+            },
+            legend: {
+              display: true,
+              position: 'top'
+            },
+            title: {
+              display: true,
+              text: 'Performance Over Time'
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              title: {
+                display: true,
+                text: 'Attempt #'
+              },
+              ticks: {
+                stepSize: 1
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Score'
+              },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
