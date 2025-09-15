@@ -195,8 +195,6 @@
   <div class="summary-screen hidden" id="summaryScreen">
     <p id="summaryText"></p>
     <button id="startOverBtn">Start Over</button>
-    <button id="shopButton">Shop</button>
-    <button id="historyButton">History</button>
   </div>
 
   <script src="https://brandonburtner.com/confetti.browser.js"></script>
@@ -278,8 +276,6 @@
     const summaryUI = document.getElementById('summaryScreen');
     const summaryText = document.getElementById('summaryText');
     const startOverBtn = document.getElementById("startOverBtn");
-    const shopButton = document.getElementById("shopButton");
-    const historyButton = document.getElementById("historyButton");
 
     const problemEl = document.getElementById('problem');
     const answerEl = document.getElementById('answer');
@@ -529,8 +525,6 @@
 
     function showSummary() {
       startOverBtn.disabled = true;
-      shopButton.disabled = true;
-      historyButton.disabled = true;
       globalTimerWrapper.classList.add('hidden');
       clearSessionData();
       const accuracy = totalAnswered > 0
@@ -560,24 +554,41 @@
         celebrateHighScore();
       }
     
-      updatePerformanceHistory(correctAnswers);
       saveLeitnerSystem(tempLeitnerSystem);
+      saveProgressToCookie();
 
       setTimeout(() => {
         startOverBtn.disabled = false;
-        shopButton.disabled = false;
-        historyButton.disabled = false;
       }, 3000);
     }
 
+    // Save performance history in a cookie
+function saveProgressToCookie() {
+  const COOKIE_NAME = "userProgress";
+  const MAX_DAYS = 365;
+
+  // Read the cookie and parse it (if it exists)
+  const existingCookie = document.cookie.split('; ').find(row => row.startsWith(COOKIE_NAME + '='));
+  const existingData = existingCookie ? JSON.parse(decodeURIComponent(existingCookie.split('=')[1])) : [];
+
+  // Create a new session entry
+  const newEntry = {
+    timestamp: new Date().toISOString(),
+    difficulty: currentDifficulty,
+    timeLength: userSelectedTime,
+    score: sessionScore
+  };
+
+  // Append and re-save the array
+  existingData.push(newEntry);
+  const encoded = encodeURIComponent(JSON.stringify(existingData));
+
+  // Set/update the cookie
+  document.cookie = `${COOKIE_NAME}=${encoded}; max-age=${60 * 60 * 24 * MAX_DAYS}; path=/`;
+}
+
     function capitalize(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function updatePerformanceHistory(score) {
-      const prev = JSON.parse(localStorage.getItem("history") || "[]");
-      prev.push(score);
-      localStorage.setItem("history", JSON.stringify(prev));
     }
 
     function celebrateHighScore() {
@@ -640,10 +651,6 @@
         };
       }
       return JSON.parse(data);
-    }
-
-    function launchStore() {
-     window.alert("Hello World");
     }
 
     submitBtn.addEventListener('click', checkAnswer);
