@@ -555,7 +555,7 @@
       }
     
       saveLeitnerSystem(tempLeitnerSystem);
-      saveProgressToCookie();
+      saveProgressToLocalStorage();
 
       setTimeout(() => {
         startOverBtn.disabled = false;
@@ -563,15 +563,10 @@
     }
 
     // Save performance history in a cookie
-function saveProgressToCookie() {
-  const COOKIE_NAME = "userProgress";
-  const MAX_DAYS = 365;
+function saveProgressToLocalStorage() {
+  const STORAGE_KEY = "userProgress";
+  const existingData = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
 
-  // Read the cookie and parse it (if it exists)
-  const existingCookie = document.cookie.split('; ').find(row => row.startsWith(COOKIE_NAME + '='));
-  const existingData = existingCookie ? JSON.parse(decodeURIComponent(existingCookie.split('=')[1])) : [];
-
-  // Create a new session entry
   const newEntry = {
     timestamp: new Date().toISOString(),
     difficulty: currentDifficulty,
@@ -579,12 +574,8 @@ function saveProgressToCookie() {
     score: sessionScore
   };
 
-  // Append and re-save the array
   existingData.push(newEntry);
-  const encoded = encodeURIComponent(JSON.stringify(existingData));
-
-  // Set/update the cookie
-  document.cookie = `${COOKIE_NAME}=${encoded}; max-age=${60 * 60 * 24 * MAX_DAYS}; path=/; SameSite=Lax; Secure`;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(existingData));
 }
 
     function capitalize(str) {
