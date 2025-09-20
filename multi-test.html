@@ -766,7 +766,7 @@ function saveProgressToLocalStorage() {
               return [
                 `Score: ${meta.score}`,
                 `Time: ${meta.timeLength / 60} min`,
-                `Difficulty: ${meta.difficulty}`,
+                `Difficulty: ${meta.difficulty.charAt(0).toUpperCase() + meta.difficulty.slice(1)}`,
                 `Timestamp: ${new Date(meta.timestamp).toLocaleString()}`
               ];
             }
