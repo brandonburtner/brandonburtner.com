@@ -683,100 +683,118 @@ function saveProgressToLocalStorage() {
     }
     
     function renderHistoryChart() {
-      const rawData = JSON.parse(localStorage.getItem("userProgress") || "[]");
-      const datasets = {};
-    
-      rawData.forEach((entry, i) => {
-        const label = `${entry.timeLength / 60} Minute`;
-        if (!datasets[label]) datasets[label] = { label, data: [], borderColor: '', fill: false };
-    
-        datasets[label].data.push({
-          x: i + 1,
-          y: entry.score,
-          meta: entry
-        });
-      });
-    
-      const colors = {
-        "1 Minute": "#007bff",
-        "5 Minute": "#28a745",
-        "10 Minute": "#dc3545"
-      };
-    
-      const finalDatasets = Object.values(datasets).map(ds => {
-        const color = colors[ds.label] || '#000';
-        return {
-          label: ds.label,
-          data: ds.data,
-          borderColor: color,
-          backgroundColor: color,
-          tension: 0.3,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          parsing: false,
-          segment: {
-            borderDash: ctx => ctx.p0.skip || ctx.p1.skip ? [6, 6] : undefined,
-          },
-        };
-      });
-    
-      const ctx = document.getElementById('historyChart').getContext('2d');
-      if (window.historyChart instanceof Chart) {
-        window.historyChart.destroy();
-      }
-    
-      window.historyChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          datasets: finalDatasets
+  const rawData = JSON.parse(localStorage.getItem("userProgress") || "[]");
+
+  if (!rawData.length) {
+    document.getElementById("historyChart").style.display = "none";
+    return;
+  }
+
+  // Sort by timestamp so attempts appear in historical order
+  rawData.sort((a, b) => a.timestamp - b.timestamp);
+
+  const datasets = {};
+  const attemptCounters = {}; // Tracks X value per session length category
+
+  rawData.forEach(entry => {
+    const label = `${entry.timeLength / 60} Minute`;
+
+    if (!datasets[label]) {
+      datasets[label] = { label, data: [] };
+      attemptCounters[label] = 1;
+    }
+
+    const attemptNumber = attemptCounters[label];
+
+    datasets[label].data.push({
+      x: attemptNumber,
+      y: entry.score,
+      meta: entry
+    });
+
+    attemptCounters[label]++;
+  });
+
+  const colors = {
+    "1 Minute": "#007bff", // Blue
+    "5 Minute": "#28a745", // Green
+    "10 Minute": "#dc3545" // Red
+  };
+
+  const finalDatasets = Object.entries(datasets).map(([label, dataset]) => {
+    const color = colors[label] || "#000";
+    return {
+      label,
+      data: dataset.data,
+      borderColor: color,
+      backgroundColor: color,
+      fill: false,
+      tension: 0.3,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      parsing: false // Needed to allow custom x/y/meta objects
+    };
+  });
+
+  const ctx = document.getElementById("historyChart").getContext("2d");
+
+  if (window.historyChart instanceof Chart) {
+    window.historyChart.destroy();
+  }
+
+  window.historyChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      datasets: finalDatasets
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Performance Over Time"
         },
-        options: {
-          responsive: true,
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const meta = ctx.raw.meta;
-                  return [
-                    `Score: ${meta.score}`,
-                    `Time: ${meta.timeLength / 60} min`,
-                    `Difficulty: ${meta.difficulty}`,
-                    `Timestamp: ${new Date(meta.timestamp).toLocaleString()}`
-                  ];
-                }
-              }
-            },
-            legend: {
-              display: true,
-              position: 'top'
-            },
-            title: {
-              display: true,
-              text: 'Performance Over Time'
-            }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              title: {
-                display: true,
-                text: 'Attempt #'
-              },
-              ticks: {
-                stepSize: 1
-              }
-            },
-            y: {
-              title: {
-                display: true,
-                text: 'Score'
-              },
-              beginAtZero: true
+        legend: {
+          display: true,
+          position: "top"
+        },
+        tooltip: {
+          callbacks: {
+            title: ctx => `Attempt #${ctx[0].parsed.x}`,
+            label: ctx => {
+              const meta = ctx.raw.meta;
+              return [
+                `Score: ${meta.score}`,
+                `Time: ${meta.timeLength / 60} min`,
+                `Difficulty: ${meta.difficulty}`,
+                `Timestamp: ${new Date(meta.timestamp).toLocaleString()}`
+              ];
             }
           }
         }
-      });
+      },
+      scales: {
+        x: {
+          type: "linear",
+          title: {
+            display: true,
+            text: "Attempt # (per session length)"
+          },
+          ticks: {
+            stepSize: 1
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Score"
+          }
+        }
+      }
     }
+  });
+}
   </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
