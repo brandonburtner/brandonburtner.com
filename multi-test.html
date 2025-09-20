@@ -721,7 +721,9 @@ function saveProgressToLocalStorage() {
       });
     
       const ctx = document.getElementById('historyChart').getContext('2d');
-      if (window.historyChart) window.historyChart.destroy();
+      if (window.historyChart instanceof Chart) {
+        window.historyChart.destroy();
+      }
     
       window.historyChart = new Chart(ctx, {
         type: 'line',
