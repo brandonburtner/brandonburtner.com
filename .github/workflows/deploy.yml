@@ -4,10 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'vite.config.js'
+      - 'family-points/**'
 
 jobs:
   build-and-deploy:
@@ -23,15 +20,18 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
+        working-directory: family-points
         run: npm install
 
       - name: Build
+        working-directory: family-points
         run: npm run build
 
       - name: Copy built files
         run: |
-          cp -r dist/. family-bank/
-          
+          mkdir -p family-bank
+          cp -r family-points/dist/. family-bank/
+
       - name: Commit and push
         run: |
           git config user.name "GitHub Actions"
