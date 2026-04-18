@@ -107,7 +107,7 @@ export function useAuth() {
     return fetch(`${config.api.baseUrl}${path}`, {
       ...options,
       headers: {
-        'Authorization': `Bearer ${tokens.access_token}`,
+        'Authorization': `Bearer ${tokens.id_token}`,
         'Content-Type': 'application/json',
         ...options.headers
       }
