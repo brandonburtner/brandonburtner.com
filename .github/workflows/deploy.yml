@@ -3,6 +3,11 @@ name: Deploy Family Bank
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'vite.config.js'
 
 jobs:
   build-and-deploy:
@@ -23,9 +28,14 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: family-bank
+      - name: Copy built files
+        run: |
+          cp -r dist/. family-bank/
+          
+      - name: Commit and push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add family-bank/
+          git commit -m "Deploy family-bank build"
+          git push
