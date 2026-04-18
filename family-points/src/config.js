@@ -1,7 +1,7 @@
 export const config = {
   cognito: {
-    domain: "us-east-2ecrfu9jqz.auth.us-east-2.amazoncognito.com",
-    clientId: "41e3ge29dk4g3ebo2p124nu747",
+    domain: "us-east-2h4ntkowqk.auth.us-east-2.amazoncognito.com",
+    clientId: "42t9o70vjlhfngnvf76e222abq",
     redirectUri: "https://brandonburtner.com/family-bank/",
     logoutUri: "https://brandonburtner.com/family-bank",
     scopes: "email openid profile"
