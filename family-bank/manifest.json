@@ -1,0 +1,21 @@
+{
+  "name": "Burtner Family Bank",
+  "short_name": "Family Bank",
+  "description": "Earn points, buy awesome stuff!",
+  "start_url": "/family-bank/",
+  "display": "standalone",
+  "background_color": "#7C3AED",
+  "theme_color": "#7C3AED",
+  "icons": [
+    {
+      "src": "/family-bank/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/family-bank/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
