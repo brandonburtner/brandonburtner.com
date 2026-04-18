@@ -32,6 +32,7 @@ jobs:
         run: |
           mkdir -p family-bank
           cp -r family-points/dist/. family-bank/
+          cp family-bank/index.html family-bank/404.html
 
       - name: Commit and push
         run: |
