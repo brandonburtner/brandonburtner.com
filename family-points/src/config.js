@@ -13,7 +13,7 @@ export const config = {
     kid: {
       email: "asherburtner@gmail.com",
       name: "Asher",
-      userId: null  // Fill in after he logs in for the first time
+      userId: "614b85e0-c051-7023-e29f-408b1b50e7ca"
     }
   }
 }
