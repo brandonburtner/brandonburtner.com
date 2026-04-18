@@ -16,7 +16,6 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for callback code in URL
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
 
@@ -43,8 +42,10 @@ export function useAuth() {
       const tokens = await response.json();
       if (tokens.id_token) {
         localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
-        window.history.replaceState({}, '', '/');
+        window.history.replaceState({}, '', '/family-bank/');
         processTokens(tokens);
+      } else {
+        console.error('Token exchange failed:', tokens);
       }
     } catch (err) {
       console.error('Token exchange failed', err);
