@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'family-points/**'
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
