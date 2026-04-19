@@ -58,7 +58,12 @@ export function useAuth() {
     const stored = localStorage.getItem(TOKEN_KEY);
     if (stored) {
       const tokens = JSON.parse(stored);
-      processTokens(tokens);
+      const claims = parseJwt(tokens.id_token);
+      if (claims && claims.exp * 1000 > Date.now()) {
+        processTokens(tokens);
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+      }
     }
     setLoading(false);
   }
@@ -71,9 +76,13 @@ export function useAuth() {
     setUser({
       id: claims.sub,
       email: claims.email,
-      name: claims.name || claims.email.split('@')[0],
+      name: claims.name || claims.given_name || claims.email.split('@')[0],
       picture: claims.picture,
-      isBanker: groups.includes('bankers'),
+      isBanker: Array.isArray(groups) 
+        ? groups.includes('bankers')
+        : typeof groups === 'string' 
+          ? groups.replace(/[\[\]]/g, '').split(' ').includes('bankers')
+          : false,
       accessToken: tokens.access_token,
       idToken: tokens.id_token
     });
@@ -103,8 +112,8 @@ export function useAuth() {
   async function apiFetch(path, options = {}) {
     const stored = localStorage.getItem(TOKEN_KEY);
     const tokens = stored ? JSON.parse(stored) : {};
-    
-    return fetch(`${config.api.baseUrl}${path}`, {
+
+    const response = await fetch(`${config.api.baseUrl}${path}`, {
       ...options,
       headers: {
         'Authorization': `Bearer ${tokens.id_token}`,
@@ -112,6 +121,14 @@ export function useAuth() {
         ...options.headers
       }
     });
+
+    if (response.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      window.location.href = '/family-bank/';
+      return;
+    }
+
+    return response;
   }
 
   return { user, loading, login, logout, apiFetch };
