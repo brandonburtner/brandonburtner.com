@@ -78,7 +78,7 @@ export default function Dashboard({ user, onLogout, apiFetch }) {
               className={balanceAnim ? 'balance-pop' : ''}
               style={{ fontSize: '2rem', fontWeight: 900, color: '#1E1B18', lineHeight: 1 }}
             >
-              {balance === null ? '...' : `⭐ ${balance.toLocaleString()}`}
+              {balance === null || balance === undefined ? '...' : `⭐ ${balance.toLocaleString()}`}
             </div>
           </div>
         </div>
@@ -140,7 +140,7 @@ function HomeTab({ user, balance, setActiveTab }) {
           CURRENT BALANCE
         </div>
         <div style={{ fontSize: '4rem', fontWeight: 900, color: 'white', lineHeight: 1.1 }}>
-          ⭐ {balance === null ? '...' : balance?.toLocaleString()}
+          ⭐ {balance === null || balance === undefined ? '...' : balance?.toLocaleString()}
         </div>
         <div style={{ color: 'rgba(255,255,255,0.7)', marginTop: 8, fontWeight: 600 }}>points</div>
       </div>
