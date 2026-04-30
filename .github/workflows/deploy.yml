@@ -1,16 +1,17 @@
-name: Deploy Family Bank
+name: Deploy Sites
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'family-points/**'
+      - 'dough-calculator/**'
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,24 +21,42 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      # ── Family Bank ──────────────────────────────────────────
+      - name: Install dependencies (family-points)
         working-directory: family-points
         run: npm install
 
-      - name: Build
+      - name: Build (family-points)
         working-directory: family-points
         run: npm run build
 
-      - name: Copy built files
+      - name: Copy built files (family-bank)
         run: |
           mkdir -p family-bank
           cp -r family-points/dist/. family-bank/
           cp family-bank/index.html family-bank/404.html
 
+      # ── Dough Calculator ─────────────────────────────────────
+      - name: Install dependencies (dough-calculator)
+        working-directory: dough-calculator
+        run: npm install
+
+      - name: Build (dough-calculator)
+        working-directory: dough-calculator
+        run: npm run build
+
+      - name: Copy built files (dough-calculator)
+        run: |
+          mkdir -p dough-calculator-build
+          cp -r dough-calculator/dist/. dough-calculator-build/
+          cp dough-calculator-build/index.html dough-calculator-build/404.html
+
+      # ── Commit & Push ─────────────────────────────────────────
       - name: Commit and push
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add -f family-bank/
-          git diff --staged --quiet || git commit -m "Deploy family-bank build"
+          git add -f dough-calculator-build/
+          git diff --staged --quiet || git commit -m "Deploy builds"
           git push
