@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/summer-sips/static/css/main.f524d5d8.css",
+    "main.css": "/summer-sips/static/css/main.025f98e0.css",
     "main.js": "/summer-sips/static/js/main.df78bb0d.js",
     "index.html": "/summer-sips/index.html",
-    "main.f524d5d8.css.map": "/summer-sips/static/css/main.f524d5d8.css.map",
+    "main.025f98e0.css.map": "/summer-sips/static/css/main.025f98e0.css.map",
     "main.df78bb0d.js.map": "/summer-sips/static/js/main.df78bb0d.js.map"
   },
   "entrypoints": [
-    "static/css/main.f524d5d8.css",
+    "static/css/main.025f98e0.css",
     "static/js/main.df78bb0d.js"
   ]
 }
