@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/summer-sips/static/css/main.096f2032.css",
+    "main.js": "/summer-sips/static/js/main.42f17ddb.js",
+    "index.html": "/summer-sips/index.html",
+    "main.096f2032.css.map": "/summer-sips/static/css/main.096f2032.css.map",
+    "main.42f17ddb.js.map": "/summer-sips/static/js/main.42f17ddb.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.096f2032.css",
+    "static/js/main.42f17ddb.js"
+  ]
+}
