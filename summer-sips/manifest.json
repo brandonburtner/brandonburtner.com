@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Summer Sips",
+  "name": "Summer Sips",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +18,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/summer-sips",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0369a1",
+  "background_color": "#e0f2fe"
 }
