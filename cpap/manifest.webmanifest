@@ -1,4 +1,5 @@
 {
+  "id": "/cpap/",
   "name": "CPAP Reminders",
   "short_name": "CPAP",
   "description": "Track and get reminders for CPAP maintenance, replacement, and reordering.",

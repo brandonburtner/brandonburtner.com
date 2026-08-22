@@ -20,7 +20,8 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/summer-sips",
+  "start_url": "/summer-sips/",
+  "scope": "/summer-sips/",
   "display": "standalone",
   "theme_color": "#0369a1",
   "background_color": "#0369a1"
