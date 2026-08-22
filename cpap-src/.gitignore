@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.zip
+vapid_private.pem
+build_api/
+build_notifier/
+__pycache__/
+awsenv/

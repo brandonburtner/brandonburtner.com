@@ -1,0 +1,14 @@
+{
+  "name": "CPAP Reminders",
+  "short_name": "CPAP",
+  "description": "Track and get reminders for CPAP maintenance, replacement, and reordering.",
+  "start_url": "/cpap/",
+  "scope": "/cpap/",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "/cpap/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/cpap/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
